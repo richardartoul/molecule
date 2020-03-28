@@ -15,7 +15,7 @@ import (
 )
 
 // TODO: Support and test enums.
-
+// TODO: Add test-cases for repeated fields of all types.
 func TestMoleculeSimple(t *testing.T) {
 	var (
 		seed      = time.Now().UnixNano()

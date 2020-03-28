@@ -4,9 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/richardartoul/molecule"
 	"github.com/richardartoul/molecule/src/codec"
-
-	"github.com/richardartoul/molecule/src"
 	"github.com/richardartoul/molecule/src/proto"
 
 	"github.com/golang/protobuf/proto"
@@ -40,7 +39,7 @@ func TestMoleculeSimple(t *testing.T) {
 		require.NoError(t, err)
 
 		buffer := codec.NewBuffer(marshaled)
-		err = molecule.MessageEach(buffer, func(fieldNum int32, value molecule.Value) error {
+		err = molecule.MessageEach(buffer, func(fieldNum int32, value molecule.Value) bool {
 			switch fieldNum {
 			case 1:
 				v, err := value.AsDouble()
@@ -95,26 +94,26 @@ func TestMoleculeSimple(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, m.Bool, v)
 			case 14:
-				v, err := value.AsString()
+				v, err := value.AsStringUnsafe()
 				require.NoError(t, err)
 				require.Equal(t, m.String_, v)
 			case 15:
-				v, err := value.AsBytes()
+				v, err := value.AsBytesUnsafe()
 				require.NoError(t, err)
 				require.Equal(t, m.Bytes, v)
 			case 16:
-				packedArr, err := value.AsBytes()
+				packedArr, err := value.AsBytesUnsafe()
 				require.NoError(t, err)
 
 				var (
 					int64s = []int64{}
 					buffer = codec.NewBuffer(packedArr)
 				)
-				err = molecule.PackedArrayEach(buffer, codec.WireVarint, func(value molecule.Value) error {
+				err = molecule.PackedArrayEach(buffer, codec.WireVarint, func(value molecule.Value) bool {
 					v, err := value.AsInt64()
 					require.NoError(t, err)
 					int64s = append(int64s, v)
-					return nil
+					return true
 				})
 				require.NoError(t, err)
 
@@ -122,7 +121,7 @@ func TestMoleculeSimple(t *testing.T) {
 			default:
 				t.Errorf("unknown field number: %d", fieldNum)
 			}
-			return nil
+			return true
 		})
 		require.NoError(t, err)
 	}

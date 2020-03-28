@@ -2,103 +2,12 @@ package molecule
 
 import (
 	"fmt"
-	"io"
 	"math"
+	"reflect"
+	"unsafe"
 
 	"github.com/richardartoul/molecule/src/codec"
 )
-
-// MessageEachFn is a function that will be called for each top-level field in a
-// message passed to MessageEach.
-type MessageEachFn func(fieldNum int32, value Value) error
-
-// MessageEach iterates over each top-level field in message b and calls fn on
-// each one.
-func MessageEach(buffer *codec.Buffer, fn MessageEachFn) error {
-	for !buffer.EOF() {
-		fieldNum, wireType, err := buffer.DecodeTagAndWireType()
-		if err == io.EOF {
-			return nil
-		}
-
-		value, err := readValueFromBuffer(wireType, buffer)
-		if err != nil {
-			return fmt.Errorf("MessageEach: error reading value from buffer: %v", err)
-		}
-
-		if err := fn(fieldNum, value); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// PackedRepeatedEachFn is a function that is called for each value in a repeated field.
-type PackedRepeatedEachFn func(value Value) error
-
-// PackedArrayEach iterates over each value in packed repeated field b and calls fn on
-// each one.
-//
-// PackedArrayEach only supports repeated fields encoded using packed encoding.
-func PackedArrayEach(buffer *codec.Buffer, wireType int8, fn PackedRepeatedEachFn) error {
-	for !buffer.EOF() {
-		value, err := readValueFromBuffer(wireType, buffer)
-		if err != nil {
-			return fmt.Errorf("ArrayEach: error reading value from buffer: %v", err)
-		}
-		if err := fn(value); err != nil {
-			return nil
-		}
-	}
-
-	return nil
-}
-
-func readValueFromBuffer(wireType int8, buffer *codec.Buffer) (Value, error) {
-	value := Value{
-		WireType: wireType,
-	}
-
-	switch wireType {
-	case codec.WireVarint:
-		varint, err := buffer.DecodeVarint()
-		if err != nil {
-			return Value{}, fmt.Errorf(
-				"MessageEach: error decoding varint: %v", err)
-		}
-		value.Number = varint
-	case codec.WireFixed32:
-		fixed32, err := buffer.DecodeFixed32()
-		if err != nil {
-			return Value{}, fmt.Errorf(
-				"MessageEach: error decoding fixed32: %v", err)
-		}
-		value.Number = fixed32
-	case codec.WireFixed64:
-		fixed64, err := buffer.DecodeFixed64()
-		if err != nil {
-			return Value{}, fmt.Errorf(
-				"MessageEach: error decoding fixed64: %v", err)
-		}
-		value.Number = fixed64
-	case codec.WireBytes:
-		b, err := buffer.DecodeRawBytes(false)
-		if err != nil {
-			return Value{}, fmt.Errorf(
-				"MessageEach: error decoding raw bytes: %v", err)
-		}
-		value.Bytes = b
-	case codec.WireStartGroup, codec.WireEndGroup:
-		return Value{}, fmt.Errorf(
-			"MessageEach: encountered group wire type: %d. Groups not supported",
-			wireType)
-	default:
-		return Value{}, fmt.Errorf(
-			"MessageEach: unknown wireType: %d", wireType)
-	}
-
-	return value, nil
-}
 
 // Value represents a protobuf value. It contains the original wiretype that the value
 // was encoded with as well as a variety of helper methods for interpreting the raw
@@ -113,10 +22,13 @@ type Value struct {
 	// 2. Fixed32
 	// 3. Fixed64
 	Number uint64
-	// BytesValue will contain the value for any fields encoded with the
+	// Bytes will contain the value for any fields encoded with the
 	// following wire types:
 	//
 	// 1. bytes
+	//
+	// Bytes is an unsafe view over the bytes in the buffer. To obtain a "safe" copy
+	// call value.AsSafeBytes() or copy Bytes directly.
 	Bytes []byte
 }
 
@@ -207,13 +119,32 @@ func (v *Value) AsBool() (bool, error) {
 	return v.Number == 1, nil
 }
 
-// AsString interprets the value as a string.
-func (v *Value) AsString() (string, error) {
-	// TODO: Do unsafe conversion here.
+// AsStringUnsafe interprets the value as a string. The returned string is an unsafe view over
+// the underlying bytes. Use AsStringSafe() to obtain a "safe" string that is a copy of the
+// underlying data.
+func (v *Value) AsStringUnsafe() (string, error) {
+	return unsafeBytesToString(v.Bytes), nil
+}
+
+// AsStringSafe interprets the value as a string by allocating a safe copy of the underlying data.
+func (v *Value) AsStringSafe() (string, error) {
 	return string(v.Bytes), nil
 }
 
-// AsBytes interprets the value as bytes.
-func (v *Value) AsBytes() ([]byte, error) {
+// AsBytesUnsafe interprets the value as a byte slice. The returned []byte is an unsafe view over
+// the underlying bytes. Use AsBytesSafe() to obtain a "safe" [] that is a copy of the
+// underlying data.
+func (v *Value) AsBytesUnsafe() ([]byte, error) {
 	return v.Bytes, nil
+}
+
+// AsBytesSafe interprets the value as a byte slice by allocating a safe copy of the underlying data.
+func (v *Value) AsBytesSafe() ([]byte, error) {
+	return append([]byte(nil), v.Bytes...), nil
+}
+
+func unsafeBytesToString(b []byte) string {
+	bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
+	sh := reflect.StringHeader{Data: bh.Data, Len: bh.Len}
+	return *(*string)(unsafe.Pointer(&sh))
 }

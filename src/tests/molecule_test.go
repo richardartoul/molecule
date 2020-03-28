@@ -1,7 +1,6 @@
 package moleculetest
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/richardartoul/molecule/src"
@@ -95,7 +94,6 @@ func TestMoleculeSimple(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, m.Bytes, v)
 		}
-		fmt.Println(fieldNum, value)
 		return nil
 	})
 	require.NoError(t, err)

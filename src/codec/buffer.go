@@ -14,15 +14,6 @@ import (
 type Buffer struct {
 	buf   []byte
 	index int
-
-	// tmp is used when another byte slice is needed, such as when
-	// serializing messages, since we need to know the length before
-	// we can write the length prefix; by caching this, including
-	// after it is grown by serialization operations, we reduce the
-	// number of allocations needed
-	tmp []byte
-
-	deterministic bool
 }
 
 // NewBuffer creates a new buffer with the given slice of bytes as the
@@ -31,19 +22,10 @@ func NewBuffer(buf []byte) *Buffer {
 	return &Buffer{buf: buf}
 }
 
-// SetDeterministic sets this buffer to encode messages deterministically. This
-// is useful for tests. But the overhead is non-zero, so it should not likely be
-// used outside of tests. When true, map fields in a message must have their
-// keys sorted before serialization to ensure deterministic output. Otherwise,
-// values in a map field will be serialized in map iteration order.
-func (cb *Buffer) SetDeterministic(deterministic bool) {
-	cb.deterministic = deterministic
-}
-
 // Reset resets this buffer back to empty. Any subsequent writes/encodes
 // to the buffer will allocate a new backing slice of bytes.
-func (cb *Buffer) Reset() {
-	cb.buf = []byte(nil)
+func (cb *Buffer) Reset(buf []byte) {
+	cb.buf = buf
 	cb.index = 0
 }
 
@@ -53,11 +35,6 @@ func (cb *Buffer) Reset() {
 // via the buffer.
 func (cb *Buffer) Bytes() []byte {
 	return cb.buf[cb.index:]
-}
-
-// String returns the remaining bytes in the buffer as a string.
-func (cb *Buffer) String() string {
-	return string(cb.Bytes())
 }
 
 // EOF returns true if there are no more bytes remaining to read.
@@ -101,12 +78,3 @@ func (cb *Buffer) Read(dest []byte) (int, error) {
 }
 
 var _ io.Reader = (*Buffer)(nil)
-
-// Write implements the io.Writer interface. It always returns
-// len(data), nil.
-func (cb *Buffer) Write(data []byte) (int, error) {
-	cb.buf = append(cb.buf, data...)
-	return len(data), nil
-}
-
-var _ io.Writer = (*Buffer)(nil)

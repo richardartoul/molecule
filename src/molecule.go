@@ -12,12 +12,13 @@ type MessageEachFn func(fieldNum int32, value Value) error
 
 func MessageEach(b []byte, fn MessageEachFn) error {
 	buffer := codec.NewBuffer(b)
-	for {
+	for !buffer.EOF() {
 		fieldNum, wireType, err := buffer.DecodeTagAndWireType()
-		if err == io.EOF || fieldNum == 0 {
+		if err == io.EOF {
 			return nil
 		}
 
+		fmt.Println(fieldNum, ":", wireType)
 		value := Value{
 			WireType: wireType,
 		}
@@ -51,6 +52,7 @@ func MessageEach(b []byte, fn MessageEachFn) error {
 					"MessageEach: error decoding raw bytes for fieldNum: %d, err: %v", fieldNum, err)
 			}
 			value.Bytes = b
+			fmt.Println(string(b))
 		case codec.WireStartGroup, codec.WireEndGroup:
 			return fmt.Errorf(
 				"MessageEach: encountered group wire type: %d for fieldNum: %d. Groups not supported",
@@ -65,6 +67,7 @@ func MessageEach(b []byte, fn MessageEachFn) error {
 			return err
 		}
 	}
+	return nil
 }
 
 // fieldNum := fd.GetNumber()

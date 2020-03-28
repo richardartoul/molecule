@@ -14,8 +14,7 @@ type MessageEachFn func(fieldNum int32, value Value) error
 
 // MessageEach iterates over each top-level field in message b and calls fn on
 // each one.
-func MessageEach(b []byte, fn MessageEachFn) error {
-	buffer := codec.NewBuffer(b)
+func MessageEach(buffer *codec.Buffer, fn MessageEachFn) error {
 	for !buffer.EOF() {
 		fieldNum, wireType, err := buffer.DecodeTagAndWireType()
 		if err == io.EOF {
@@ -41,9 +40,7 @@ type PackedRepeatedEachFn func(value Value) error
 // each one.
 //
 // PackedArrayEach only supports repeated fields encoded using packed encoding.
-func PackedArrayEach(b []byte, wireType int8, fn PackedRepeatedEachFn) error {
-	buffer := codec.NewBuffer(b)
-
+func PackedArrayEach(buffer *codec.Buffer, wireType int8, fn PackedRepeatedEachFn) error {
 	for !buffer.EOF() {
 		value, err := readValueFromBuffer(wireType, buffer)
 		if err != nil {

@@ -39,7 +39,8 @@ func TestMoleculeSimple(t *testing.T) {
 		marshaled, err := proto.Marshal(m)
 		require.NoError(t, err)
 
-		err = molecule.MessageEach(marshaled, func(fieldNum int32, value molecule.Value) error {
+		buffer := codec.NewBuffer(marshaled)
+		err = molecule.MessageEach(buffer, func(fieldNum int32, value molecule.Value) error {
 			switch fieldNum {
 			case 1:
 				v, err := value.AsDouble()
@@ -105,8 +106,11 @@ func TestMoleculeSimple(t *testing.T) {
 				packedArr, err := value.AsBytes()
 				require.NoError(t, err)
 
-				int64s := []int64{}
-				err = molecule.PackedArrayEach(packedArr, codec.WireVarint, func(value molecule.Value) error {
+				var (
+					int64s = []int64{}
+					buffer = codec.NewBuffer(packedArr)
+				)
+				err = molecule.PackedArrayEach(buffer, codec.WireVarint, func(value molecule.Value) error {
 					v, err := value.AsInt64()
 					require.NoError(t, err)
 					int64s = append(int64s, v)

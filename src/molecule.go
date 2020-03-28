@@ -30,6 +30,7 @@ func MessageEach(b []byte, fn MessageEachFn) error {
 				return fmt.Errorf(
 					"MessageEach: error decoding varint for fieldNum: %d, err: %v", fieldNum, err)
 			}
+			fmt.Println("varint", varint)
 			value.Number = varint
 		case codec.WireFixed32:
 			fixed32, err := buffer.DecodeFixed32()
@@ -63,72 +64,13 @@ func MessageEach(b []byte, fn MessageEachFn) error {
 				wireType, fieldNum)
 		}
 
+		fmt.Println(fieldNum, ":", value)
 		if err := fn(fieldNum, value); err != nil {
 			return err
 		}
 	}
 	return nil
 }
-
-// fieldNum := fd.GetNumber()
-// 	val := unmarshalValue{fieldNumber: fieldNum, v: v}
-// 	switch fd.GetType() {
-// 	case dpb.FieldDescriptorProto_TYPE_BOOL,
-// 		dpb.FieldDescriptorProto_TYPE_UINT64,
-// 		dpb.FieldDescriptorProto_TYPE_FIXED64,
-// 		dpb.FieldDescriptorProto_TYPE_INT64,
-// 		dpb.FieldDescriptorProto_TYPE_SFIXED64,
-// 		dpb.FieldDescriptorProto_TYPE_DOUBLE:
-// 		return val, nil
-
-// 	case dpb.FieldDescriptorProto_TYPE_UINT32,
-// 		dpb.FieldDescriptorProto_TYPE_FIXED32:
-// 		if v > math.MaxUint32 {
-// 			return zeroValue, fmt.Errorf("%d (field num %d) overflows uint32", v, fieldNum)
-// 		}
-// 		return val, nil
-
-// 	case dpb.FieldDescriptorProto_TYPE_INT32,
-// 		dpb.FieldDescriptorProto_TYPE_ENUM:
-// 		s := int64(v)
-// 		if s > math.MaxInt32 {
-// 			return zeroValue, fmt.Errorf("%d (field num %d) overflows int32", v, fieldNum)
-// 		}
-// 		if s < math.MinInt32 {
-// 			return zeroValue, fmt.Errorf("%d (field num %d) underflows int32", v, fieldNum)
-// 		}
-// 		return val, nil
-
-// 	case dpb.FieldDescriptorProto_TYPE_SFIXED32:
-// 		if v > math.MaxUint32 {
-// 			return zeroValue, fmt.Errorf("%d (field num %d) overflows int32", v, fieldNum)
-// 		}
-// 		return val, nil
-
-// 	case dpb.FieldDescriptorProto_TYPE_SINT32:
-// 		if v > math.MaxUint32 {
-// 			return zeroValue, fmt.Errorf("%d (field num %d) overflows int32", v, fieldNum)
-// 		}
-// 		val.v = uint64(decodeZigZag32(v))
-// 		return val, nil
-
-// 	case dpb.FieldDescriptorProto_TYPE_SINT64:
-// 		val.v = uint64(decodeZigZag64(v))
-// 		return val, nil
-
-// 	case dpb.FieldDescriptorProto_TYPE_FLOAT:
-// 		if v > math.MaxUint32 {
-// 			return zeroValue, fmt.Errorf("%d (field num %d) overflows uint32", v, fieldNum)
-// 		}
-// 		float32Val := math.Float32frombits(uint32(v))
-// 		float64Bits := math.Float64bits(float64(float32Val))
-// 		val.v = float64Bits
-// 		return val, nil
-
-// 	default:
-// 		// bytes, string, message, and group cannot be represented as a simple numeric value.
-// 		return zeroValue, fmt.Errorf("bad input; field %s requires length-delimited wire type", fd.GetFullyQualifiedName())
-// 	}
 
 type Value struct {
 	// WireType is the protobuf wire type that was used to encode the field.
@@ -159,8 +101,12 @@ func (v *Value) AsFloat() (float32, error) {
 }
 
 func (v *Value) AsInt32() (int32, error) {
-	if v.Number > math.MaxUint32 {
-		return 0, fmt.Errorf("AsInt32: %d overflows int32", v.Number)
+	s := int64(v.Number)
+	if s > math.MaxInt32 {
+		return 0, fmt.Errorf("AsInt32: %d overflows int32", s)
+	}
+	if s < math.MinInt32 {
+		return 0, fmt.Errorf("AsInt32: %d underflows int32", s)
 	}
 	return int32(v.Number), nil
 }

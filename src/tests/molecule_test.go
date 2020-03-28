@@ -1,6 +1,7 @@
 package moleculetest
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/google/gofuzz"
 	"github.com/stretchr/testify/require"
 )
+
+// TODO: Support and test enums.
 
 func TestMoleculeSimple(t *testing.T) {
 	var (
@@ -33,6 +36,13 @@ func TestMoleculeSimple(t *testing.T) {
 		marshaled, err := proto.Marshal(m)
 		require.NoError(t, err)
 
+		// Ensure the message actually round-trips properly.
+		unmarshaled := &simple.Simple{}
+		err = proto.Unmarshal(marshaled, unmarshaled)
+		require.NoError(t, err)
+		require.Equal(t, m, unmarshaled)
+		fmt.Println(unmarshaled)
+
 		err = molecule.MessageEach(marshaled, func(fieldNum int32, value molecule.Value) error {
 			switch fieldNum {
 			case 1:
@@ -43,10 +53,10 @@ func TestMoleculeSimple(t *testing.T) {
 				v, err := value.AsFloat()
 				require.NoError(t, err)
 				require.Equal(t, m.Float, v)
-			// case 3:
-			// 	v, err := value.AsInt32()
-			// 	require.NoError(t, err)
-			// 	require.Equal(t, m.Int32, v)
+			case 3:
+				v, err := value.AsInt32()
+				require.NoError(t, err)
+				require.Equal(t, m.Int32, v)
 			case 4:
 				v, err := value.AsInt64()
 				require.NoError(t, err)

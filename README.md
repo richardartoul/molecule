@@ -22,6 +22,7 @@ The downside, of course, is that `molecule` is more difficult to use (and easier
 
 1. Proto2 syntax (some thing will probably work, but nothing is tested).
 2. Repeated fields encoded not using the "packed" encoding (although in theory they can be parsed using this library, there just aren't any special helpers).
+3. Map fields (and probably lots of other things).
 
 ## Examples
 

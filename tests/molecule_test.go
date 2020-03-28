@@ -109,7 +109,7 @@ func TestMoleculeSimple(t *testing.T) {
 					int64s = []int64{}
 					buffer = codec.NewBuffer(packedArr)
 				)
-				err = molecule.PackedArrayEach(buffer, codec.WireVarint, func(value molecule.Value) bool {
+				err = molecule.PackedArrayEach(buffer, codec.FieldDescriptorProto_TYPE_INT64, func(value molecule.Value) bool {
 					v, err := value.AsInt64()
 					require.NoError(t, err)
 					int64s = append(int64s, v)
@@ -117,7 +117,7 @@ func TestMoleculeSimple(t *testing.T) {
 				})
 				require.NoError(t, err)
 
-				require.Equal(t, m.RepeatedInt64NotPacked, int64s)
+				require.Equal(t, m.RepeatedInt64Packed, int64s)
 			default:
 				t.Errorf("unknown field number: %d", fieldNum)
 			}

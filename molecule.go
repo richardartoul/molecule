@@ -39,7 +39,35 @@ type PackedRepeatedEachFn func(value Value) bool
 // each one.
 //
 // PackedArrayEach only supports repeated fields encoded using packed encoding.
-func PackedArrayEach(buffer *codec.Buffer, wireType int8, fn PackedRepeatedEachFn) error {
+func PackedArrayEach(buffer *codec.Buffer, fieldType codec.FieldDescriptorProto_Type, fn PackedRepeatedEachFn) error {
+	var wireType int8
+	switch fieldType {
+	case codec.FieldDescriptorProto_TYPE_INT32,
+		codec.FieldDescriptorProto_TYPE_INT64,
+		codec.FieldDescriptorProto_TYPE_UINT32,
+		codec.FieldDescriptorProto_TYPE_UINT64,
+		codec.FieldDescriptorProto_TYPE_SINT32,
+		codec.FieldDescriptorProto_TYPE_SINT64,
+		codec.FieldDescriptorProto_TYPE_BOOL,
+		codec.FieldDescriptorProto_TYPE_ENUM:
+		wireType = codec.WireVarint
+	case codec.FieldDescriptorProto_TYPE_FIXED64,
+		codec.FieldDescriptorProto_TYPE_SFIXED64,
+		codec.FieldDescriptorProto_TYPE_DOUBLE:
+		wireType = codec.WireFixed64
+	case codec.FieldDescriptorProto_TYPE_FIXED32,
+		codec.FieldDescriptorProto_TYPE_SFIXED32,
+		codec.FieldDescriptorProto_TYPE_FLOAT:
+		wireType = codec.WireFixed32
+	case codec.FieldDescriptorProto_TYPE_STRING,
+		codec.FieldDescriptorProto_TYPE_MESSAGE,
+		codec.FieldDescriptorProto_TYPE_BYTES:
+		wireType = codec.WireBytes
+	default:
+		return fmt.Errorf(
+			"PackedArrayEach: unknown field type: %v", fieldType)
+	}
+
 	for !buffer.EOF() {
 		value, err := readValueFromBuffer(wireType, buffer)
 		if err != nil {

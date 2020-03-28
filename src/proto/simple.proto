@@ -20,5 +20,5 @@ message Simple {
     bool bool = 13;
     string string = 14;
     bytes bytes = 15;
-    repeated int64 repeated_int64_not_packed = 16 [packed=true];
+    repeated int64 repeated_int64_packed = 16 [packed=true];
 }

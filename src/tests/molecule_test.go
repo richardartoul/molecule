@@ -1,9 +1,10 @@
 package moleculetest
 
 import (
-	"fmt"
 	"testing"
 	"time"
+
+	"github.com/richardartoul/molecule/src/codec"
 
 	"github.com/richardartoul/molecule/src"
 	"github.com/richardartoul/molecule/src/proto"
@@ -25,6 +26,8 @@ func TestMoleculeSimple(t *testing.T) {
 		// Log the seed to make debugging failures easier.
 		t.Logf("Running test with seed: %d", seed)
 	}()
+	// Limit slice size to prevent tests from taking too long.
+	fuzzer.NumElements(0, 100)
 
 	for i := 0; i < numFuzzes; i++ {
 		m := &simple.Simple{}
@@ -35,13 +38,6 @@ func TestMoleculeSimple(t *testing.T) {
 
 		marshaled, err := proto.Marshal(m)
 		require.NoError(t, err)
-
-		// Ensure the message actually round-trips properly.
-		unmarshaled := &simple.Simple{}
-		err = proto.Unmarshal(marshaled, unmarshaled)
-		require.NoError(t, err)
-		require.Equal(t, m, unmarshaled)
-		fmt.Println(unmarshaled)
 
 		err = molecule.MessageEach(marshaled, func(fieldNum int32, value molecule.Value) error {
 			switch fieldNum {
@@ -105,6 +101,22 @@ func TestMoleculeSimple(t *testing.T) {
 				v, err := value.AsBytes()
 				require.NoError(t, err)
 				require.Equal(t, m.Bytes, v)
+			case 16:
+				packedArr, err := value.AsBytes()
+				require.NoError(t, err)
+
+				int64s := []int64{}
+				err = molecule.PackedArrayEach(packedArr, codec.WireVarint, func(value molecule.Value) error {
+					v, err := value.AsInt64()
+					require.NoError(t, err)
+					int64s = append(int64s, v)
+					return nil
+				})
+				require.NoError(t, err)
+
+				require.Equal(t, m.RepeatedInt64NotPacked, int64s)
+			default:
+				t.Errorf("unknown field number: %d", fieldNum)
 			}
 			return nil
 		})

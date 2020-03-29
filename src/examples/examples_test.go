@@ -52,8 +52,9 @@ func TestExampleSelectAPackedRepeatedField(t *testing.T) {
 				unmarshaledInts = append(unmarshaledInts, vInt64)
 				return true
 			})
+
 			// Found it, stop scanning.
-			return true
+			return false
 		}
 		// Continue scanning.
 		return true

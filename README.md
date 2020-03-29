@@ -6,9 +6,9 @@ This library is in alpha and the API could change.
 
 ## Rationale
 
-The standard `Unmarshal` protobuf interface in Go makes it extremely difficult to manually control allocations when parsing protobufs. In addition, its common to only require access to a subset of an individual protobuf's fields. These issues make using protobufs in performance critical paths difficult.
+The standard `Unmarshal` protobuf interface in Go makes it difficult to manually control allocations when parsing protobufs. In addition, its common to only require access to a subset of an individual protobuf's fields. These issues make it hard to use protobuf in performance critical paths.
 
-This library attempts to solve those problems by introducing a streaming, zero-allocation interface that allows users to have complete control over which fields are parsed, and how objects are allocated.
+This library attempts to solve those problems by introducing a streaming, zero-allocation interface that allows users to have complete control over which fields are parsed, and how/when objects are allocated.
 
 The downside, of course, is that `molecule` is more difficult to use (and easier to misuse) than the standard protobuf libraries so its recommended that it only be used in situations where performance is important. It is not a general purpose replacement for `proto.Unmarshal()`.
 
@@ -26,9 +26,44 @@ The downside, of course, is that `molecule` is more difficult to use (and easier
 
 ## Examples
 
-```golang
+The `/src/examples/examples_test.go` file has a few examples (including one that demonstrates how to work with `repeated` fields), but the example below demonstrates a brief example of how the API can be used:
 
 ```
+message Test {
+    string string_field = 1;
+    bytes bytes_field = 2;
+}
+```
+
+```golang
+	m := &Test{StringField: "hello world!"}
+	marshaled, err := proto.Marshal(m)
+	if err != nil {
+        panic(err)
+    }
+
+    var (
+        buffer = codec.NewBuffer(marshaled)
+        strVal molecule.Value
+    )
+	molecule.MessageEach(buffer, func(fieldNum int32, value molecule.Value) bool {
+		if fieldNum == 1 {
+			strVal = value
+			return false
+        }
+
+		// Continue scanning.
+		return true
+    })
+    str, err := strVal.AsStringUnsafe()
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Println("StringField: ", str)
+```
+
+Note that in the example above the `str` variable in an "unsafe" view over the `marshaled` bytes. If those bytes were to be modified, pool, or reused in any way the value of the `str` variable would be undefined. If a safe value is required use the `AsStringSafe()` API instead, however, be aware that this will allocate a new string.
 
 ## Attributions
 
@@ -38,5 +73,5 @@ This library is mostly a thin wrapper around other people's work:
 2. The codec for interacting protobuf streams was lifted from this [protobuf reflection library](https://github.com/jhump/protoreflect). The code was manually vendored instead of imported to reduce dependencies.
 
 ## Dependencies
-The core `molecule` library has zero external dependencies, although the go.sum file does contain some dependencies introduced from the tests package, however,
-those should not be included transitively when using this library.
+The core `molecule` library has zero external dependencies. The go.sum file does contain some dependencies introduced from the tests package, however,
+those *should* not be included transitively when using this library.

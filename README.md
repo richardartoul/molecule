@@ -10,7 +10,7 @@ The standard `Unmarshal` protobuf interface in Go makes it difficult to manually
 
 This library attempts to solve those problems by introducing a streaming, zero-allocation interface that allows users to have complete control over which fields are parsed, and how/when objects are allocated.
 
-The downside, of course, is that `molecule` is more difficult to use (and easier to misuse) than the standard protobuf libraries so its recommended that it only be used in situations where performance is important. It is not a general purpose replacement for `proto.Unmarshal()`.
+The downside, of course, is that `molecule` is more difficult to use (and easier to misuse) than the standard protobuf libraries so its recommended that it only be used in situations where performance is important. It is not a general purpose replacement for `proto.Unmarshal()`. It is recommended that users familiarize themselves with the [proto3 encoding](https://developers.google.com/protocol-buffers/docs/encoding) before attempting to use this library.
 
 ## Features
 
@@ -31,7 +31,7 @@ The `/src/examples/examples_test.go` file has a few examples (including one that
 ```
 message Test {
     string string_field = 1;
-    bytes bytes_field = 2;
+    int64 int64_field = 2;
 }
 ```
 
@@ -45,11 +45,14 @@ message Test {
     var (
         buffer = codec.NewBuffer(marshaled)
         strVal molecule.Value
+        int64Val molcule.Value
     )
 	molecule.MessageEach(buffer, func(fieldNum int32, value molecule.Value) bool {
 		if fieldNum == 1 {
 			strVal = value
-			return false
+        }
+        if fieldNum == 2 {
+            int64Val = value
         }
 
 		// Continue scanning.
@@ -59,8 +62,13 @@ message Test {
     if err != nil {
         panic(err)
     }
+    int64V, err := int64Val.AsInt64()
+    if err != nil {
+        panic(err)
+    }
 
     fmt.Println("StringField: ", str)
+    fmt.Println("Int64Field: ", int64V)
 ```
 
 Note that in the example above the `str` variable in an "unsafe" view over the `marshaled` bytes. If those bytes were to be modified, pool, or reused in any way the value of the `str` variable would be undefined. If a safe value is required use the `AsStringSafe()` API instead, however, be aware that this will allocate a new string.

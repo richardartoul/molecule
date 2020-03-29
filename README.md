@@ -30,7 +30,7 @@ The downside, of course, is that `molecule` is more difficult to use (and easier
 
 The `/src/examples/examples_test.go` file has a few examples (including one that demonstrates how to work with `repeated` fields), but the example below demonstrates a brief example of how the API can be used:
 
-```
+```proto3
 message Test {
     string string_field = 1;
     int64 int64_field = 2;
@@ -38,9 +38,9 @@ message Test {
 ```
 
 ```golang
-	m := &Test{StringField: "hello world!"}
-	marshaled, err := proto.Marshal(m)
-	if err != nil {
+    m := &Test{StringField: "hello world!"}
+    marshaled, err := proto.Marshal(m)
+    if err != nil {
         panic(err)
     }
 
@@ -49,16 +49,16 @@ message Test {
         strVal molecule.Value
         int64Val molcule.Value
     )
-	molecule.MessageEach(buffer, func(fieldNum int32, value molecule.Value) bool {
-		if fieldNum == 1 {
-			strVal = value
+    molecule.MessageEach(buffer, func(fieldNum int32, value molecule.Value) bool {
+        if fieldNum == 1 {
+            strVal = value
         }
         if fieldNum == 2 {
             int64Val = value
         }
 
-		// Continue scanning.
-		return true
+        // Continue scanning.
+        return true
     })
     str, err := strVal.AsStringUnsafe()
     if err != nil {

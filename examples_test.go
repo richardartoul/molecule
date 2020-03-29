@@ -49,6 +49,10 @@ func Example() {
 		panic(err)
 	}
 
-	fmt.Println("StringField: ", str)
-	fmt.Println("Int64Field: ", int64V)
+	fmt.Println("StringField:", str)
+	fmt.Println("Int64Field:", int64V)
+
+	// Output:
+	// StringField: hello world!
+	// Int64Field: 10
 }

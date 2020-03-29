@@ -1,4 +1,5 @@
 [![GoDoc](https://godoc.org/github.com/richardartoul/molecule?status.png)](https://godoc.org/github.com/richardartoul/molecule)
+[![C.I](https://github.com/richardartoul/molecule/workflows/Go/badge.svg)](https://github.com/richardartoul/molecule/actions)
 
 # Molecule
 

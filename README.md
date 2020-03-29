@@ -80,7 +80,7 @@ Note that in the example above the `str` variable in an "unsafe" view over the `
 This library is mostly a thin wrapper around other people's work:
 
 1. The interface was inspired by this [jsonparser](https://github.com/buger/jsonparser) library.
-2. The codec for interacting protobuf streams was lifted from this [protobuf reflection library](https://github.com/jhump/protoreflect). The code was manually vendored instead of imported to reduce dependencies.
+2. The codec for interacting with protobuf streams was lifted from this [protobuf reflection library](https://github.com/jhump/protoreflect). The code was manually vendored instead of imported to reduce dependencies.
 
 ## Dependencies
 The core `molecule` library has zero external dependencies. The go.sum file does contain some dependencies introduced from the tests package, however,

@@ -63,6 +63,125 @@ func Example() {
 	// Int64Field: 10
 }
 
+// Example_nested demonstrates how to use the MessageEach function to
+// decode a nested message.
+//
+// message Test {
+//     string string_field = 1;
+//     int64 int64_field = 2;
+//     repeated int64 repeated_int64_field = 3;
+// }
+
+// message Nested {
+//     Test nested_message = 1;
+// }
+func Example_nested() {
+	var (
+		test   = &simple.Test{StringField: "Hello world!"}
+		nested = &simple.Nested{NestedMessage: test}
+	)
+	marshaled, err := proto.Marshal(nested)
+	if err != nil {
+		panic(err)
+	}
+
+	var (
+		buffer = codec.NewBuffer(marshaled)
+		strVal Value
+	)
+	err = MessageEach(buffer, func(fieldNum int32, value Value) bool {
+		if fieldNum == 1 {
+			packedArr, err := value.AsBytesUnsafe()
+			if err != nil {
+				panic(err)
+			}
+
+			buffer := codec.NewBuffer(packedArr)
+			err = MessageEach(buffer, func(fieldNum int32, value Value) bool {
+				if fieldNum == 1 {
+					strVal = value
+				}
+				// Found it, stop scanning.
+				return false
+			})
+			if err != nil {
+				panic(err)
+			}
+
+			// Found it, stop scanning.
+			return false
+		}
+		// Continue scanning.
+		return true
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	str, err := strVal.AsStringUnsafe()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("NestedMessage.StringField:", str)
+
+	// Output:
+	// NestedMessage.StringField: Hello world!
+}
+
+// Example_repeated demonstrates how to use the PackedRepeatedEach function to
+// decode a repeated field encoded in the packed (proto 3) format.
+//
+// message Test {
+//   string string_field = 1;
+//   int64 int64_field = 2;
+//   repeated int64 repeated_int64_field = 3;
+// }
+func Example_repeated() {
+	int64s := []int64{1, 2, 3, 4, 5, 6, 7}
+	m := &simple.Test{RepeatedInt64Field: int64s}
+	marshaled, err := proto.Marshal(m)
+	if err != nil {
+		panic(err)
+	}
+
+	var (
+		buffer          = codec.NewBuffer(marshaled)
+		unmarshaledInts = []int64{}
+	)
+	err = MessageEach(buffer, func(fieldNum int32, value Value) bool {
+		if fieldNum == 3 {
+			packedArr, err := value.AsBytesUnsafe()
+			if err != nil {
+				panic(err)
+			}
+
+			buffer := codec.NewBuffer(packedArr)
+			PackedRepeatedEach(buffer, codec.FieldType_INT64, func(v Value) bool {
+				vInt64, err := v.AsInt64()
+				if err != nil {
+					panic(err)
+				}
+				unmarshaledInts = append(unmarshaledInts, vInt64)
+				return true
+			})
+
+			// Found it, stop scanning.
+			return false
+		}
+		// Continue scanning.
+		return true
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Int64s:", unmarshaledInts)
+
+	// Output:
+	// Int64s: [1 2 3 4 5 6 7]
+}
+
 // ExampleMessageEach_SelectAField desmonates how the MessageEach function can
 // be used to select an individual field.
 //
@@ -82,7 +201,7 @@ func ExampleMessageEach_selectAField() {
 		buffer = codec.NewBuffer(marshaled)
 		strVal Value
 	)
-	MessageEach(buffer, func(fieldNum int32, value Value) bool {
+	err = MessageEach(buffer, func(fieldNum int32, value Value) bool {
 		if fieldNum == 1 {
 			strVal = value
 			// Found it, stop scanning.
@@ -91,6 +210,9 @@ func ExampleMessageEach_selectAField() {
 		// Continue scanning.
 		return true
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	str, err := strVal.AsStringUnsafe()
 	if err != nil {
@@ -123,7 +245,7 @@ func ExamplePackedRepeatedEach() {
 		buffer          = codec.NewBuffer(marshaled)
 		unmarshaledInts = []int64{}
 	)
-	MessageEach(buffer, func(fieldNum int32, value Value) bool {
+	err = MessageEach(buffer, func(fieldNum int32, value Value) bool {
 		if fieldNum == 3 {
 			packedArr, err := value.AsBytesUnsafe()
 			if err != nil {
@@ -131,7 +253,7 @@ func ExamplePackedRepeatedEach() {
 			}
 
 			buffer := codec.NewBuffer(packedArr)
-			PackedRepeatedEach(buffer, codec.FieldType_INT64, func(v Value) bool {
+			err = PackedRepeatedEach(buffer, codec.FieldType_INT64, func(v Value) bool {
 				vInt64, err := v.AsInt64()
 				if err != nil {
 					panic(err)
@@ -139,6 +261,9 @@ func ExamplePackedRepeatedEach() {
 				unmarshaledInts = append(unmarshaledInts, vInt64)
 				return true
 			})
+			if err != nil {
+				panic(err)
+			}
 
 			// Found it, stop scanning.
 			return false
@@ -146,6 +271,9 @@ func ExamplePackedRepeatedEach() {
 		// Continue scanning.
 		return true
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	fmt.Println("Int64s:", unmarshaledInts)
 

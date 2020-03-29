@@ -14,7 +14,7 @@ import (
 // value based on the field's actual type.
 type Value struct {
 	// WireType is the protobuf wire type that was used to encode the field.
-	WireType int8
+	WireType codec.WireType
 	// Number will contain the value for any fields encoded with the
 	// following wire types:
 	//

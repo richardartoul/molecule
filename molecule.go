@@ -42,29 +42,29 @@ type PackedRepeatedEachFn func(value Value) bool
 // The fieldType argument should match the type of the value stored in the repeated field.
 //
 // PackedArrayEach only supports repeated fields encoded using packed encoding.
-func PackedArrayEach(buffer *codec.Buffer, fieldType codec.FieldDescriptorProto_Type, fn PackedRepeatedEachFn) error {
-	var wireType int8
+func PackedArrayEach(buffer *codec.Buffer, fieldType codec.FieldType, fn PackedRepeatedEachFn) error {
+	var wireType codec.WireType
 	switch fieldType {
-	case codec.FieldDescriptorProto_TYPE_INT32,
-		codec.FieldDescriptorProto_TYPE_INT64,
-		codec.FieldDescriptorProto_TYPE_UINT32,
-		codec.FieldDescriptorProto_TYPE_UINT64,
-		codec.FieldDescriptorProto_TYPE_SINT32,
-		codec.FieldDescriptorProto_TYPE_SINT64,
-		codec.FieldDescriptorProto_TYPE_BOOL,
-		codec.FieldDescriptorProto_TYPE_ENUM:
+	case codec.FieldType_INT32,
+		codec.FieldType_INT64,
+		codec.FieldType_UINT32,
+		codec.FieldType_UINT64,
+		codec.FieldType_SINT32,
+		codec.FieldType_SINT64,
+		codec.FieldType_BOOL,
+		codec.FieldType_ENUM:
 		wireType = codec.WireVarint
-	case codec.FieldDescriptorProto_TYPE_FIXED64,
-		codec.FieldDescriptorProto_TYPE_SFIXED64,
-		codec.FieldDescriptorProto_TYPE_DOUBLE:
+	case codec.FieldType_FIXED64,
+		codec.FieldType_SFIXED64,
+		codec.FieldType_DOUBLE:
 		wireType = codec.WireFixed64
-	case codec.FieldDescriptorProto_TYPE_FIXED32,
-		codec.FieldDescriptorProto_TYPE_SFIXED32,
-		codec.FieldDescriptorProto_TYPE_FLOAT:
+	case codec.FieldType_FIXED32,
+		codec.FieldType_SFIXED32,
+		codec.FieldType_FLOAT:
 		wireType = codec.WireFixed32
-	case codec.FieldDescriptorProto_TYPE_STRING,
-		codec.FieldDescriptorProto_TYPE_MESSAGE,
-		codec.FieldDescriptorProto_TYPE_BYTES:
+	case codec.FieldType_STRING,
+		codec.FieldType_MESSAGE,
+		codec.FieldType_BYTES:
 		wireType = codec.WireBytes
 	default:
 		return fmt.Errorf(
@@ -84,7 +84,7 @@ func PackedArrayEach(buffer *codec.Buffer, fieldType codec.FieldDescriptorProto_
 	return nil
 }
 
-func readValueFromBuffer(wireType int8, buffer *codec.Buffer) (Value, error) {
+func readValueFromBuffer(wireType codec.WireType, buffer *codec.Buffer) (Value, error) {
 	value := Value{
 		WireType: wireType,
 	}

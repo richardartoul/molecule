@@ -14,27 +14,27 @@ var ErrOverflow = errors.New("proto: integer overflow")
 // is not valid.
 var ErrBadWireType = errors.New("proto: bad wiretype")
 
-var varintTypes = map[FieldDescriptorProto_Type]bool{}
-var fixed32Types = map[FieldDescriptorProto_Type]bool{}
-var fixed64Types = map[FieldDescriptorProto_Type]bool{}
+var varintTypes = map[FieldType]bool{}
+var fixed32Types = map[FieldType]bool{}
+var fixed64Types = map[FieldType]bool{}
 
 func init() {
-	varintTypes[FieldDescriptorProto_TYPE_BOOL] = true
-	varintTypes[FieldDescriptorProto_TYPE_INT32] = true
-	varintTypes[FieldDescriptorProto_TYPE_INT64] = true
-	varintTypes[FieldDescriptorProto_TYPE_UINT32] = true
-	varintTypes[FieldDescriptorProto_TYPE_UINT64] = true
-	varintTypes[FieldDescriptorProto_TYPE_SINT32] = true
-	varintTypes[FieldDescriptorProto_TYPE_SINT64] = true
-	varintTypes[FieldDescriptorProto_TYPE_ENUM] = true
+	varintTypes[FieldType_BOOL] = true
+	varintTypes[FieldType_INT32] = true
+	varintTypes[FieldType_INT64] = true
+	varintTypes[FieldType_UINT32] = true
+	varintTypes[FieldType_UINT64] = true
+	varintTypes[FieldType_SINT32] = true
+	varintTypes[FieldType_SINT64] = true
+	varintTypes[FieldType_ENUM] = true
 
-	fixed32Types[FieldDescriptorProto_TYPE_FIXED32] = true
-	fixed32Types[FieldDescriptorProto_TYPE_SFIXED32] = true
-	fixed32Types[FieldDescriptorProto_TYPE_FLOAT] = true
+	fixed32Types[FieldType_FIXED32] = true
+	fixed32Types[FieldType_SFIXED32] = true
+	fixed32Types[FieldType_FLOAT] = true
 
-	fixed64Types[FieldDescriptorProto_TYPE_FIXED64] = true
-	fixed64Types[FieldDescriptorProto_TYPE_SFIXED64] = true
-	fixed64Types[FieldDescriptorProto_TYPE_DOUBLE] = true
+	fixed64Types[FieldType_FIXED64] = true
+	fixed64Types[FieldType_SFIXED64] = true
+	fixed64Types[FieldType_DOUBLE] = true
 }
 
 func (cb *Buffer) decodeVarintSlow() (x uint64, err error) {
@@ -164,14 +164,14 @@ done:
 // DecodeTagAndWireType decodes a field tag and wire type from input.
 // This reads a varint and then extracts the two fields from the varint
 // value read.
-func (cb *Buffer) DecodeTagAndWireType() (tag int32, wireType int8, err error) {
+func (cb *Buffer) DecodeTagAndWireType() (tag int32, wireType WireType, err error) {
 	var v uint64
 	v, err = cb.DecodeVarint()
 	if err != nil {
 		return
 	}
 	// low 7 bits is wire type
-	wireType = int8(v & 7)
+	wireType = WireType(v & 7)
 	// rest is int32 tag number
 	v = v >> 3
 	if v > math.MaxInt32 {

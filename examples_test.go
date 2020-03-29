@@ -11,11 +11,13 @@ import (
 
 // Example demonstrates how the molecule library can be used to parse a protobuf message.
 func Example() {
-	// message Test {
-	//   string string_field = 1;
-	//   int64 int64_field = 2;
-	//   repeated int64 repeated_int64_field = 3;
-	// }
+	// Proto definitions:
+	//
+	//   message Test {
+	//     string string_field = 1;
+	//     int64 int64_field = 2;
+	//     repeated int64 repeated_int64_field = 3;
+	//   }
 
 	m := &simple.Test{
 		StringField: "hello world!",
@@ -66,15 +68,17 @@ func Example() {
 // Example_nested demonstrates how to use the MessageEach function to
 // decode a nested message.
 func Example_nested() {
-	// message Test {
-	//     string string_field = 1;
-	//     int64 int64_field = 2;
-	//     repeated int64 repeated_int64_field = 3;
-	// }
-
-	// message Nested {
-	//     Test nested_message = 1;
-	// }
+	// Proto definitions:
+	//
+	//   message Test {
+	//       string string_field = 1;
+	//       int64 int64_field = 2;
+	//       repeated int64 repeated_int64_field = 3;
+	//   }
+	//
+	//   message Nested {
+	//       Test nested_message = 1;
+	//   }
 
 	var (
 		test   = &simple.Test{StringField: "Hello world!"}
@@ -132,11 +136,13 @@ func Example_nested() {
 // Example_repeated demonstrates how to use the PackedRepeatedEach function to
 // decode a repeated field encoded in the packed (proto 3) format.
 func Example_repeated() {
-	// message Test {
-	//   string string_field = 1;
-	//   int64 int64_field = 2;
-	//   repeated int64 repeated_int64_field = 3;
-	// }
+	// Proto definitions:
+	//
+	//   message Test {
+	//     string string_field = 1;
+	//     int64 int64_field = 2;
+	//     repeated int64 repeated_int64_field = 3;
+	//   }
 
 	int64s := []int64{1, 2, 3, 4, 5, 6, 7}
 	m := &simple.Test{RepeatedInt64Field: int64s}
@@ -185,11 +191,13 @@ func Example_repeated() {
 // ExampleMessageEach_SelectAField desmonates how the MessageEach function can
 // be used to select an individual field.
 func ExampleMessageEach_selectAField() {
-	// message Test {
-	//   string string_field = 1;
-	//   int64 int64_field = 2;
-	//   repeated int64 repeated_int64_field = 3;
-	// }
+	// Proto definitions:
+	//
+	//   message Test {
+	//     string string_field = 1;
+	//     int64 int64_field = 2;
+	//     repeated int64 repeated_int64_field = 3;
+	//   }
 
 	m := &simple.Test{StringField: "hello world!"}
 	marshaled, err := proto.Marshal(m)
@@ -228,11 +236,13 @@ func ExampleMessageEach_selectAField() {
 // ExamplePackedRepeatedEach demonstrates how to use the PackedRepeatedEach function to
 // decode a repeated field encoded in the packed (proto 3) format.
 func ExamplePackedRepeatedEach() {
-	// message Test {
-	//   string string_field = 1;
-	//   int64 int64_field = 2;
-	//   repeated int64 repeated_int64_field = 3;
-	// }
+	// Proto definitions:
+	//
+	//   message Test {
+	//     string string_field = 1;
+	//     int64 int64_field = 2;
+	//     repeated int64 repeated_int64_field = 3;
+	//   }
 
 	int64s := []int64{1, 2, 3, 4, 5, 6, 7}
 	m := &simple.Test{RepeatedInt64Field: int64s}

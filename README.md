@@ -25,7 +25,8 @@ The downside, of course, is that `molecule` is more difficult to use (and easier
 
 1. Proto2 syntax (some things will probably work, but nothing is tested).
 2. Repeated fields encoded not using the "packed" encoding (although in theory they can be parsed using this library, there just aren't any special helpers).
-3. Map fields (and probably lots of other things).
+3. Map fields. It *should* be possible to parse maps using this library's API, but it would be a bid tedious. I plan on adding better support for this once I settle on a reasonable API.
+4. Probably lots of other things.
 
 ## Examples
 

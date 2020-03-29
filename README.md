@@ -5,7 +5,7 @@
 
 Molecule is a Go library for parsing protobufs in an efficient and zero-allocation manner. The API is loosely based on [this excellent](https://github.com/buger/jsonparser) Go JSON parsing library.
 
-This library is in alpha and the API could change.
+This library is in alpha and the API could change. The current APIs are fairly low level, but additional helpers may be added in the future to make certain operations more ergonomic.
 
 ## Rationale
 

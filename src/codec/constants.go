@@ -1,3 +1,5 @@
+// Package codec contains all the logic required for interacting with the protobuf raw encoding. It also contains
+// all the encoding and field type specific constants required for using the molecule library.
 package codec
 
 // WireType represents a protobuf encoding wire type.

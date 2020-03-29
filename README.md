@@ -23,7 +23,7 @@ The downside, of course, is that `molecule` is more difficult to use (and easier
 
 ## Not Supported
 
-1. Proto2 syntax (some thing will probably work, but nothing is tested).
+1. Proto2 syntax (some things will probably work, but nothing is tested).
 2. Repeated fields encoded not using the "packed" encoding (although in theory they can be parsed using this library, there just aren't any special helpers).
 3. Map fields (and probably lots of other things).
 
@@ -88,5 +88,5 @@ This library is mostly a thin wrapper around other people's work:
 2. The codec for interacting with protobuf streams was lifted from this [protobuf reflection library](https://github.com/jhump/protoreflect). The code was manually vendored instead of imported to reduce dependencies.
 
 ## Dependencies
-The core `molecule` library has zero external dependencies. The go.sum file does contain some dependencies introduced from the tests package, however,
+The core `molecule` library has zero external dependencies. The `go.sum` file does contain some dependencies introduced from the tests package, however,
 those *should* not be included transitively when using this library.

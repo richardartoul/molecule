@@ -22,3 +22,8 @@ message Simple {
     bytes bytes = 15;
     repeated int64 repeated_int64_packed = 16 [packed=true];
 }
+
+message Test {
+    string string_field = 1;
+    int64 int64_field = 2;
+}

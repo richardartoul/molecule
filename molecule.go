@@ -1,3 +1,4 @@
+// Package molecule is a Go library for parsing protobufs in an efficient and zero-allocation manner.
 package molecule
 
 import (

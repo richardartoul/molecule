@@ -6,7 +6,7 @@ Molecule is a Go library for parsing protobufs in an efficient and zero-allocati
 
 This library is in alpha and the API could change.
 
-## Rationale
+## Rational
 
 The standard `Unmarshal` protobuf interface in Go makes it difficult to manually control allocations when parsing protobufs. In addition, its common to only require access to a subset of an individual protobuf's fields. These issues make it hard to use protobuf in performance critical paths.
 

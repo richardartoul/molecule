@@ -50,7 +50,7 @@ func BenchmarkMolecule(b *testing.B) {
 				noErr(err)
 
 				arrayBuffer.Reset(packedArr)
-				err = molecule.PackedArrayEach(arrayBuffer, codec.FieldType_INT64, func(value molecule.Value) bool {
+				err = molecule.PackedRepeatedEach(arrayBuffer, codec.FieldType_INT64, func(value molecule.Value) bool {
 					v, err := value.AsInt64()
 					noErr(err)
 					int64s = append(int64s, v)

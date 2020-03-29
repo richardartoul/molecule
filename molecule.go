@@ -36,13 +36,13 @@ func MessageEach(buffer *codec.Buffer, fn MessageEachFn) error {
 // PackedRepeatedEachFn is a function that is called for each value in a repeated field.
 type PackedRepeatedEachFn func(value Value) bool
 
-// PackedArrayEach iterates over each value in the packed repeated field stored in buffer
+// PackedRepeatedEach iterates over each value in the packed repeated field stored in buffer
 // and calls fn on each one.
 //
 // The fieldType argument should match the type of the value stored in the repeated field.
 //
-// PackedArrayEach only supports repeated fields encoded using packed encoding.
-func PackedArrayEach(buffer *codec.Buffer, fieldType codec.FieldType, fn PackedRepeatedEachFn) error {
+// PackedRepeatedEach only supports repeated fields encoded using packed encoding.
+func PackedRepeatedEach(buffer *codec.Buffer, fieldType codec.FieldType, fn PackedRepeatedEachFn) error {
 	var wireType codec.WireType
 	switch fieldType {
 	case codec.FieldType_INT32,
@@ -68,13 +68,13 @@ func PackedArrayEach(buffer *codec.Buffer, fieldType codec.FieldType, fn PackedR
 		wireType = codec.WireBytes
 	default:
 		return fmt.Errorf(
-			"PackedArrayEach: unknown field type: %v", fieldType)
+			"PackedRepeatedEach: unknown field type: %v", fieldType)
 	}
 
 	for !buffer.EOF() {
 		value, err := readValueFromBuffer(wireType, buffer)
 		if err != nil {
-			return fmt.Errorf("ArrayEach: error reading value from buffer: %v", err)
+			return fmt.Errorf("PackedRepeatedEach: error reading value from buffer: %v", err)
 		}
 		if shouldContinue := fn(value); !shouldContinue {
 			return nil

@@ -46,7 +46,7 @@ func TestExampleSelectAPackedRepeatedField(t *testing.T) {
 			require.NoError(t, err)
 
 			buffer := codec.NewBuffer(packedArr)
-			molecule.PackedArrayEach(buffer, codec.FieldType_INT64, func(v molecule.Value) bool {
+			molecule.PackedRepeatedEach(buffer, codec.FieldType_INT64, func(v molecule.Value) bool {
 				vInt64, err := v.AsInt64()
 				require.NoError(t, err)
 				unmarshaledInts = append(unmarshaledInts, vInt64)

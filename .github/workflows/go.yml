@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Build and Test
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.14.1
@@ -27,10 +27,5 @@ jobs:
           fi
       - name: Build
         run: go build -v .
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Run tests"
-        run: |
-          go test ./...
+      - name: Test
+        run: go test ./...

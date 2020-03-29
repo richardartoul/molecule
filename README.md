@@ -29,56 +29,7 @@ The downside, of course, is that `molecule` is more difficult to use (and easier
 
 ## Examples
 
-The `/src/examples/examples_test.go` file has a few examples (including one that demonstrates how to work with `repeated` fields), but the example below demonstrates a brief example of how the API can be used:
-
-```proto3
-message Test {
-    string string_field = 1;
-    int64 int64_field = 2;
-}
-```
-
-```golang
-    m := &Test{StringField: "hello world!"}
-    marshaled, err := proto.Marshal(m)
-    if err != nil {
-        panic(err)
-    }
-
-    var (
-        buffer = codec.NewBuffer(marshaled)
-        strVal molecule.Value
-        int64Val molcule.Value
-    )
-    err := molecule.MessageEach(buffer, func(fieldNum int32, value molecule.Value) bool {
-        if fieldNum == 1 {
-            strVal = value
-        }
-        if fieldNum == 2 {
-            int64Val = value
-        }
-
-        // Continue scanning.
-        return true
-    })
-    if err != nil {
-        panic(err)
-    }
-
-    str, err := strVal.AsStringUnsafe()
-    if err != nil {
-        panic(err)
-    }
-    int64V, err := int64Val.AsInt64()
-    if err != nil {
-        panic(err)
-    }
-
-    fmt.Println("StringField: ", str)
-    fmt.Println("Int64Field: ", int64V)
-```
-
-Note that in the example above the `str` variable in an "unsafe" view over the `marshaled` bytes. If those bytes were to be modified, pool, or reused in any way the value of the `str` variable would be undefined. If a safe value is required use the `AsStringSafe()` API instead, however, be aware that this will allocate a new string.
+The [godocs](https://godoc.org/github.com/richardartoul/molecule) have numerous runnable examples.
 
 ## Attributions
 

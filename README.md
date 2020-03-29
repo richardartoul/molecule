@@ -50,7 +50,7 @@ message Test {
         strVal molecule.Value
         int64Val molcule.Value
     )
-    molecule.MessageEach(buffer, func(fieldNum int32, value molecule.Value) bool {
+    err := molecule.MessageEach(buffer, func(fieldNum int32, value molecule.Value) bool {
         if fieldNum == 1 {
             strVal = value
         }
@@ -61,6 +61,10 @@ message Test {
         // Continue scanning.
         return true
     })
+    if err != nil {
+        panic(err)
+    }
+
     str, err := strVal.AsStringUnsafe()
     if err != nil {
         panic(err)

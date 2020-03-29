@@ -109,7 +109,7 @@ func TestMoleculeSimple(t *testing.T) {
 					int64s = []int64{}
 					buffer = codec.NewBuffer(packedArr)
 				)
-				err = molecule.PackedArrayEach(buffer, codec.FieldType_INT64, func(value molecule.Value) bool {
+				err = molecule.PackedRepeatedEach(buffer, codec.FieldType_INT64, func(value molecule.Value) bool {
 					v, err := value.AsInt64()
 					require.NoError(t, err)
 					int64s = append(int64s, v)

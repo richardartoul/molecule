@@ -10,6 +10,12 @@ import (
 )
 
 // Example demonstrates how the molecule library can be used to parse a protobuf message.
+//
+// message Test {
+//   string string_field = 1;
+//   int64 int64_field = 2;
+//   repeated int64 repeated_int64_field = 3;
+// }
 func Example() {
 	m := &simple.Test{
 		StringField: "hello world!",
@@ -55,4 +61,94 @@ func Example() {
 	// Output:
 	// StringField: hello world!
 	// Int64Field: 10
+}
+
+// ExampleMessageEach_SelectAField desmonates how the MessageEach function can
+// be used to select an individual field.
+//
+// message Test {
+//   string string_field = 1;
+//   int64 int64_field = 2;
+//   repeated int64 repeated_int64_field = 3;
+// }
+func ExampleMessageEach_selectAField() {
+	m := &simple.Test{StringField: "hello world!"}
+	marshaled, err := proto.Marshal(m)
+	if err != nil {
+		panic(err)
+	}
+
+	var (
+		buffer = codec.NewBuffer(marshaled)
+		strVal Value
+	)
+	MessageEach(buffer, func(fieldNum int32, value Value) bool {
+		if fieldNum == 1 {
+			strVal = value
+			// Found it, stop scanning.
+			return false
+		}
+		// Continue scanning.
+		return true
+	})
+
+	str, err := strVal.AsStringUnsafe()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("StringField:", str)
+
+	// Output:
+	// StringField: hello world!
+}
+
+// ExamplePackedRepeatedEach demonstrates how to use the PackedRepeatedEach function to
+// decode a repeated field encoded in the packed (proto 3) format.
+//
+// message Test {
+//   string string_field = 1;
+//   int64 int64_field = 2;
+//   repeated int64 repeated_int64_field = 3;
+// }
+func ExamplePackedRepeatedEach() {
+	int64s := []int64{1, 2, 3, 4, 5, 6, 7}
+	m := &simple.Test{RepeatedInt64Field: int64s}
+	marshaled, err := proto.Marshal(m)
+	if err != nil {
+		panic(err)
+	}
+
+	var (
+		buffer          = codec.NewBuffer(marshaled)
+		unmarshaledInts = []int64{}
+	)
+	MessageEach(buffer, func(fieldNum int32, value Value) bool {
+		if fieldNum == 3 {
+			packedArr, err := value.AsBytesUnsafe()
+			if err != nil {
+				panic(err)
+			}
+
+			buffer := codec.NewBuffer(packedArr)
+			PackedRepeatedEach(buffer, codec.FieldType_INT64, func(v Value) bool {
+				vInt64, err := v.AsInt64()
+				if err != nil {
+					panic(err)
+				}
+				unmarshaledInts = append(unmarshaledInts, vInt64)
+				return true
+			})
+
+			// Found it, stop scanning.
+			return false
+		}
+		// Continue scanning.
+		return true
+	})
+
+	fmt.Println("Int64s:", unmarshaledInts)
+
+	// Output:
+	// Int64s: [1 2 3 4 5 6 7]
 }

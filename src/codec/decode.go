@@ -1,3 +1,5 @@
+// This file contains modifications from the original source code found in: https://github.com/jhump/protoreflect
+
 package codec
 
 import (

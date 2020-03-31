@@ -1,3 +1,5 @@
+// This file contains modifications from the original source code found in: https://github.com/jhump/protoreflect
+
 // Package codec contains all the logic required for interacting with the protobuf raw encoding. It also contains
 // all the encoding and field type specific constants required for using the molecule library.
 package codec

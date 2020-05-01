@@ -10,7 +10,7 @@ import (
 
 // MessageEachFn is a function that will be called for each top-level field in a
 // message passed to MessageEach.
-type MessageEachFn func(fieldNum int32, value Value) bool
+type MessageEachFn func(fieldNum int32, value Value) (bool, error)
 
 // MessageEach iterates over each top-level field in the message stored in buffer
 // and calls fn on each one.
@@ -26,15 +26,15 @@ func MessageEach(buffer *codec.Buffer, fn MessageEachFn) error {
 			return fmt.Errorf("MessageEach: error reading value from buffer: %v", err)
 		}
 
-		if shouldContinue := fn(fieldNum, value); !shouldContinue {
-			return nil
+		if shouldContinue, err := fn(fieldNum, value); err != nil || !shouldContinue {
+			return err
 		}
 	}
 	return nil
 }
 
 // PackedRepeatedEachFn is a function that is called for each value in a repeated field.
-type PackedRepeatedEachFn func(value Value) bool
+type PackedRepeatedEachFn func(value Value) (bool, error)
 
 // PackedRepeatedEach iterates over each value in the packed repeated field stored in buffer
 // and calls fn on each one.
@@ -76,7 +76,7 @@ func PackedRepeatedEach(buffer *codec.Buffer, fieldType codec.FieldType, fn Pack
 		if err != nil {
 			return fmt.Errorf("PackedRepeatedEach: error reading value from buffer: %v", err)
 		}
-		if shouldContinue := fn(value); !shouldContinue {
+		if shouldContinue, err := fn(value); err != nil || !shouldContinue {
 			return nil
 		}
 	}

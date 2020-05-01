@@ -38,15 +38,15 @@ func BenchmarkMolecule(b *testing.B) {
 		msgBuffer := codec.NewBuffer(marshaled)
 		for i := 0; i < b.N; i++ {
 			msgBuffer.Reset(marshaled)
-			err := molecule.MessageEach(msgBuffer, func(fieldNum int32, value molecule.Value) bool {
+			err := molecule.MessageEach(msgBuffer, func(fieldNum int32, value molecule.Value) (bool, error) {
 				switch fieldNum {
 				case 14:
 					_, err := value.AsStringUnsafe()
 					noErr(err)
-					return false
+					return false, nil
 				}
 
-				return true
+				return true, nil
 			})
 			noErr(err)
 		}
@@ -62,7 +62,7 @@ func BenchmarkMolecule(b *testing.B) {
 			msgBuffer.Reset(marshaled)
 			int64s = int64s[:0]
 
-			err := molecule.MessageEach(msgBuffer, func(fieldNum int32, value molecule.Value) bool {
+			err := molecule.MessageEach(msgBuffer, func(fieldNum int32, value molecule.Value) (bool, error) {
 				switch fieldNum {
 				case 14:
 					_, err := value.AsStringUnsafe()
@@ -75,16 +75,16 @@ func BenchmarkMolecule(b *testing.B) {
 					noErr(err)
 
 					arrayBuffer.Reset(packedArr)
-					err = molecule.PackedRepeatedEach(arrayBuffer, codec.FieldType_INT64, func(value molecule.Value) bool {
+					err = molecule.PackedRepeatedEach(arrayBuffer, codec.FieldType_INT64, func(value molecule.Value) (bool, error) {
 						v, err := value.AsInt64()
 						noErr(err)
 						int64s = append(int64s, v)
-						return true
+						return true, nil
 					})
 					noErr(err)
 				}
 
-				return true
+				return true, nil
 			})
 			noErr(err)
 		}

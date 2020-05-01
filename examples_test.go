@@ -33,7 +33,7 @@ func Example() {
 		strVal   Value
 		int64Val Value
 	)
-	err = MessageEach(buffer, func(fieldNum int32, value Value) bool {
+	err = MessageEach(buffer, func(fieldNum int32, value Value) (bool, error) {
 		if fieldNum == 1 {
 			strVal = value
 		}
@@ -42,7 +42,7 @@ func Example() {
 		}
 
 		// Continue scanning.
-		return true
+		return true, nil
 	})
 	if err != nil {
 		panic(err)
@@ -93,30 +93,30 @@ func Example_nested() {
 		buffer = codec.NewBuffer(marshaled)
 		strVal Value
 	)
-	err = MessageEach(buffer, func(fieldNum int32, value Value) bool {
+	err = MessageEach(buffer, func(fieldNum int32, value Value) (bool, error) {
 		if fieldNum == 1 {
 			packedArr, err := value.AsBytesUnsafe()
 			if err != nil {
-				panic(err)
+				return false, err
 			}
 
 			buffer := codec.NewBuffer(packedArr)
-			err = MessageEach(buffer, func(fieldNum int32, value Value) bool {
+			err = MessageEach(buffer, func(fieldNum int32, value Value) (bool, error) {
 				if fieldNum == 1 {
 					strVal = value
 				}
 				// Found it, stop scanning.
-				return false
+				return false, nil
 			})
 			if err != nil {
-				panic(err)
+				return false, err
 			}
 
 			// Found it, stop scanning.
-			return false
+			return false, nil
 		}
 		// Continue scanning.
-		return true
+		return true, nil
 	})
 	if err != nil {
 		panic(err)
@@ -155,28 +155,30 @@ func Example_repeated() {
 		buffer          = codec.NewBuffer(marshaled)
 		unmarshaledInts = []int64{}
 	)
-	err = MessageEach(buffer, func(fieldNum int32, value Value) bool {
+	err = MessageEach(buffer, func(fieldNum int32, value Value) (bool, error) {
 		if fieldNum == 3 {
 			packedArr, err := value.AsBytesUnsafe()
 			if err != nil {
-				panic(err)
+				return false, err
 			}
 
 			buffer := codec.NewBuffer(packedArr)
-			PackedRepeatedEach(buffer, codec.FieldType_INT64, func(v Value) bool {
+			if err := PackedRepeatedEach(buffer, codec.FieldType_INT64, func(v Value) (bool, error) {
 				vInt64, err := v.AsInt64()
 				if err != nil {
-					panic(err)
+					return false, err
 				}
 				unmarshaledInts = append(unmarshaledInts, vInt64)
-				return true
-			})
+				return true, nil
+			}); err != nil {
+				return false, err
+			}
 
 			// Found it, stop scanning.
-			return false
+			return false, nil
 		}
 		// Continue scanning.
-		return true
+		return true, nil
 	})
 	if err != nil {
 		panic(err)
@@ -209,14 +211,14 @@ func ExampleMessageEach_selectAField() {
 		buffer = codec.NewBuffer(marshaled)
 		strVal Value
 	)
-	err = MessageEach(buffer, func(fieldNum int32, value Value) bool {
+	err = MessageEach(buffer, func(fieldNum int32, value Value) (bool, error) {
 		if fieldNum == 1 {
 			strVal = value
 			// Found it, stop scanning.
-			return false
+			return false, nil
 		}
 		// Continue scanning.
-		return true
+		return true, nil
 	})
 	if err != nil {
 		panic(err)
@@ -255,7 +257,7 @@ func ExamplePackedRepeatedEach() {
 		buffer          = codec.NewBuffer(marshaled)
 		unmarshaledInts = []int64{}
 	)
-	err = MessageEach(buffer, func(fieldNum int32, value Value) bool {
+	err = MessageEach(buffer, func(fieldNum int32, value Value) (bool, error) {
 		if fieldNum == 3 {
 			packedArr, err := value.AsBytesUnsafe()
 			if err != nil {
@@ -263,23 +265,23 @@ func ExamplePackedRepeatedEach() {
 			}
 
 			buffer := codec.NewBuffer(packedArr)
-			err = PackedRepeatedEach(buffer, codec.FieldType_INT64, func(v Value) bool {
+			err = PackedRepeatedEach(buffer, codec.FieldType_INT64, func(v Value) (bool, error) {
 				vInt64, err := v.AsInt64()
 				if err != nil {
-					panic(err)
+					return false, err
 				}
 				unmarshaledInts = append(unmarshaledInts, vInt64)
-				return true
+				return true, nil
 			})
 			if err != nil {
-				panic(err)
+				return false, err
 			}
 
 			// Found it, stop scanning.
-			return false
+			return false, nil
 		}
 		// Continue scanning.
-		return true
+		return true, nil
 	})
 	if err != nil {
 		panic(err)

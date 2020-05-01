@@ -39,7 +39,7 @@ func TestMoleculeSimple(t *testing.T) {
 		require.NoError(t, err)
 
 		buffer := codec.NewBuffer(marshaled)
-		err = molecule.MessageEach(buffer, func(fieldNum int32, value molecule.Value) bool {
+		err = molecule.MessageEach(buffer, func(fieldNum int32, value molecule.Value) (bool, error) {
 			switch fieldNum {
 			case 1:
 				v, err := value.AsDouble()
@@ -109,11 +109,11 @@ func TestMoleculeSimple(t *testing.T) {
 					int64s = []int64{}
 					buffer = codec.NewBuffer(packedArr)
 				)
-				err = molecule.PackedRepeatedEach(buffer, codec.FieldType_INT64, func(value molecule.Value) bool {
+				err = molecule.PackedRepeatedEach(buffer, codec.FieldType_INT64, func(value molecule.Value) (bool, error) {
 					v, err := value.AsInt64()
 					require.NoError(t, err)
 					int64s = append(int64s, v)
-					return true
+					return true, nil
 				})
 				require.NoError(t, err)
 
@@ -121,7 +121,7 @@ func TestMoleculeSimple(t *testing.T) {
 			default:
 				t.Errorf("unknown field number: %d", fieldNum)
 			}
-			return true
+			return true, nil
 		})
 		require.NoError(t, err)
 	}

@@ -3,7 +3,6 @@ package molecule
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/richardartoul/molecule/src/codec"
 )
@@ -16,21 +15,84 @@ type MessageEachFn func(fieldNum int32, value Value) (bool, error)
 // and calls fn on each one.
 func MessageEach(buffer *codec.Buffer, fn MessageEachFn) error {
 	for !buffer.EOF() {
-		fieldNum, wireType, err := buffer.DecodeTagAndWireType()
-		if err == io.EOF {
-			return nil
+		v, err := buffer.DecodeVarint()
+		if err != nil {
+			return err
+		}
+		fieldNum, wireType, err := codec.AsTagAndWireType(v)
+		if err != nil {
+			return err
 		}
 
-		value, err := readValueFromBuffer(wireType, buffer)
+		value := Value{
+			WireType: wireType,
+		}
+
+		switch wireType {
+		case codec.WireVarint:
+			value.Number, err = buffer.DecodeVarint()
+		case codec.WireFixed32:
+			value.Number, err = buffer.DecodeFixed32()
+		case codec.WireFixed64:
+			value.Number, err = buffer.DecodeFixed64()
+		case codec.WireBytes:
+			value.Bytes, err = buffer.DecodeRawBytes(false)
+		case codec.WireStartGroup, codec.WireEndGroup:
+			err = fmt.Errorf("MessageEach: encountered group wire type: %d. Groups not supported", wireType)
+		default:
+			err = fmt.Errorf("MessageEach: unknown wireType: %d", wireType)
+		}
+
 		if err != nil {
 			return fmt.Errorf("MessageEach: error reading value from buffer: %v", err)
 		}
 
-		if shouldContinue, err := fn(fieldNum, value); err != nil || !shouldContinue {
+		shouldContinue, err := fn(fieldNum, value)
+		if err != nil || !shouldContinue {
 			return err
 		}
 	}
 	return nil
+}
+
+// Next populates the given value with the next value in the field and returns the field number or an error if one
+// was encountered while reading the next field value
+func Next(buffer *codec.Buffer, value *Value) (fieldNum int32, err error) {
+	var v uint64
+	var wireType codec.WireType
+	v, err = buffer.DecodeVarint()
+	if err != nil {
+		return
+	}
+
+	fieldNum, wireType, err = codec.AsTagAndWireType(v)
+	if err != nil {
+		return
+	}
+
+	value.WireType = wireType
+
+	switch wireType {
+	case codec.WireVarint:
+		value.Number, err = buffer.DecodeVarint()
+	case codec.WireFixed32:
+		value.Number, err = buffer.DecodeFixed32()
+	case codec.WireFixed64:
+		value.Number, err = buffer.DecodeFixed64()
+	case codec.WireBytes:
+		value.Bytes, err = buffer.DecodeRawBytes(false)
+	case codec.WireStartGroup, codec.WireEndGroup:
+		err = fmt.Errorf("MessageEach: encountered group wire type: %d. Groups not supported", wireType)
+	default:
+		err = fmt.Errorf("MessageEach: unknown wireType: %d", wireType)
+	}
+
+	if err != nil {
+		err = fmt.Errorf("MessageEach: error reading value from buffer: %v", err)
+		return
+	}
+
+	return
 }
 
 // PackedRepeatedEachFn is a function that is called for each value in a repeated field.
@@ -72,60 +134,34 @@ func PackedRepeatedEach(buffer *codec.Buffer, fieldType codec.FieldType, fn Pack
 	}
 
 	for !buffer.EOF() {
-		value, err := readValueFromBuffer(wireType, buffer)
+		var err error
+		value := Value{
+			WireType: wireType,
+		}
+
+		switch wireType {
+		case codec.WireVarint:
+			value.Number, err = buffer.DecodeVarint()
+		case codec.WireFixed32:
+			value.Number, err = buffer.DecodeFixed32()
+		case codec.WireFixed64:
+			value.Number, err = buffer.DecodeFixed64()
+		case codec.WireBytes:
+			value.Bytes, err = buffer.DecodeRawBytes(false)
+		case codec.WireStartGroup, codec.WireEndGroup:
+			err = fmt.Errorf("PackedRepeatedEach: encountered group wire type: %d. Groups not supported", wireType)
+		default:
+			err = fmt.Errorf("PackedRepeatedEach: unknown wireType: %d", wireType)
+		}
+
 		if err != nil {
 			return fmt.Errorf("PackedRepeatedEach: error reading value from buffer: %v", err)
 		}
+
 		if shouldContinue, err := fn(value); err != nil || !shouldContinue {
-			return nil
+			return err
 		}
 	}
 
 	return nil
-}
-
-func readValueFromBuffer(wireType codec.WireType, buffer *codec.Buffer) (Value, error) {
-	value := Value{
-		WireType: wireType,
-	}
-
-	switch wireType {
-	case codec.WireVarint:
-		varint, err := buffer.DecodeVarint()
-		if err != nil {
-			return Value{}, fmt.Errorf(
-				"MessageEach: error decoding varint: %v", err)
-		}
-		value.Number = varint
-	case codec.WireFixed32:
-		fixed32, err := buffer.DecodeFixed32()
-		if err != nil {
-			return Value{}, fmt.Errorf(
-				"MessageEach: error decoding fixed32: %v", err)
-		}
-		value.Number = fixed32
-	case codec.WireFixed64:
-		fixed64, err := buffer.DecodeFixed64()
-		if err != nil {
-			return Value{}, fmt.Errorf(
-				"MessageEach: error decoding fixed64: %v", err)
-		}
-		value.Number = fixed64
-	case codec.WireBytes:
-		b, err := buffer.DecodeRawBytes(false)
-		if err != nil {
-			return Value{}, fmt.Errorf(
-				"MessageEach: error decoding raw bytes: %v", err)
-		}
-		value.Bytes = b
-	case codec.WireStartGroup, codec.WireEndGroup:
-		return Value{}, fmt.Errorf(
-			"MessageEach: encountered group wire type: %d. Groups not supported",
-			wireType)
-	default:
-		return Value{}, fmt.Errorf(
-			"MessageEach: unknown wireType: %d", wireType)
-	}
-
-	return value, nil
 }

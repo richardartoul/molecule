@@ -16,12 +16,13 @@ import (
 type Buffer struct {
 	buf   []byte
 	index int
+	len   int
 }
 
 // NewBuffer creates a new buffer with the given slice of bytes as the
 // buffer's initial contents.
 func NewBuffer(buf []byte) *Buffer {
-	return &Buffer{buf: buf}
+	return &Buffer{buf: buf, index: 0, len: len(buf)}
 }
 
 // Reset resets this buffer back to empty. Any subsequent writes/encodes
@@ -29,6 +30,7 @@ func NewBuffer(buf []byte) *Buffer {
 func (cb *Buffer) Reset(buf []byte) {
 	cb.buf = buf
 	cb.index = 0
+	cb.len = len(buf)
 }
 
 // Bytes returns the slice of bytes remaining in the buffer. Note that
@@ -41,7 +43,7 @@ func (cb *Buffer) Bytes() []byte {
 
 // EOF returns true if there are no more bytes remaining to read.
 func (cb *Buffer) EOF() bool {
-	return cb.index >= len(cb.buf)
+	return cb.index >= cb.len
 }
 
 // Skip attempts to skip the given number of bytes in the input. If
@@ -53,7 +55,7 @@ func (cb *Buffer) Skip(count int) error {
 		return fmt.Errorf("proto: bad byte length %d", count)
 	}
 	newIndex := cb.index + count
-	if newIndex < cb.index || newIndex > len(cb.buf) {
+	if newIndex < cb.index || newIndex > cb.len {
 		return io.ErrUnexpectedEOF
 	}
 	cb.index = newIndex
@@ -62,7 +64,7 @@ func (cb *Buffer) Skip(count int) error {
 
 // Len returns the remaining number of bytes in the buffer.
 func (cb *Buffer) Len() int {
-	return len(cb.buf) - cb.index
+	return cb.len - cb.index
 }
 
 // Read implements the io.Reader interface. If there are no bytes
@@ -71,7 +73,7 @@ func (cb *Buffer) Len() int {
 // them into dest. It returns the number of bytes copied and a nil
 // error in this case.
 func (cb *Buffer) Read(dest []byte) (int, error) {
-	if cb.index == len(cb.buf) {
+	if cb.index == cb.len {
 		return 0, io.EOF
 	}
 	copied := copy(dest, cb.buf[cb.index:])

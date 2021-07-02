@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 )
 
 // ErrOverflow is returned when an integer is too large to be represented.
@@ -39,149 +38,238 @@ func init() {
 	fixed64Types[FieldType_DOUBLE] = true
 }
 
-func (cb *Buffer) decodeVarintSlow() (x uint64, err error) {
-	i := cb.index
-	l := len(cb.buf)
-
-	for shift := uint(0); shift < 64; shift += 7 {
-		if i >= l {
-			err = io.ErrUnexpectedEOF
-			return
-		}
-		b := cb.buf[i]
-		i++
-		x |= (uint64(b) & 0x7F) << shift
-		if b < 0x80 {
-			cb.index = i
-			return
-		}
-	}
-
-	// The number is too large to represent in a 64-bit value.
-	err = ErrOverflow
-	return
-}
-
 // DecodeVarint reads a varint-encoded integer from the Buffer.
 // This is the format for the
 // int32, int64, uint32, uint64, bool, and enum
 // protocol buffer types.
+//
+// This implementation is inlined from https://github.com/dennwc/varint to avoid the call-site overhead
 func (cb *Buffer) DecodeVarint() (uint64, error) {
-	i := cb.index
-	buf := cb.buf
-
-	if i >= len(buf) {
+	if cb.len == 0 {
 		return 0, io.ErrUnexpectedEOF
-	} else if buf[i] < 0x80 {
+	}
+	const (
+		step = 7
+		bit  = 1 << 7
+		mask = bit - 1
+	)
+	if cb.len >= 10 { // no bound checks
+		// i == 0
+		b := cb.buf[cb.index]
+		if b < bit {
+			cb.index++
+			return uint64(b), nil
+		}
+		x := uint64(b & mask)
+		var s uint = step
+
+		// i == 1
+		b = cb.buf[cb.index+1]
+		if b < bit {
+			cb.index += 2
+			return x | uint64(b)<<s, nil
+		}
+		x |= uint64(b&mask) << s
+		s += step
+
+		// i == 2
+		b = cb.buf[cb.index+2]
+		if b < bit {
+			cb.index += 3
+			return x | uint64(b)<<s, nil
+		}
+		x |= uint64(b&mask) << s
+		s += step
+
+		// i == 3
+		b = cb.buf[cb.index+3]
+		if b < bit {
+			cb.index += 4
+			return x | uint64(b)<<s, nil
+		}
+		x |= uint64(b&mask) << s
+		s += step
+
+		// i == 4
+		b = cb.buf[cb.index+4]
+		if b < bit {
+			cb.index += 5
+			return x | uint64(b)<<s, nil
+		}
+		x |= uint64(b&mask) << s
+		s += step
+
+		// i == 5
+		b = cb.buf[cb.index+5]
+		if b < bit {
+			cb.index += 6
+			return x | uint64(b)<<s, nil
+		}
+		x |= uint64(b&mask) << s
+		s += step
+
+		// i == 6
+		b = cb.buf[cb.index+6]
+		if b < bit {
+			cb.index += 7
+			return x | uint64(b)<<s, nil
+		}
+		x |= uint64(b&mask) << s
+		s += step
+
+		// i == 7
+		b = cb.buf[cb.index+7]
+		if b < bit {
+			cb.index += 8
+			return x | uint64(b)<<s, nil
+		}
+		x |= uint64(b&mask) << s
+		s += step
+
+		// i == 8
+		b = cb.buf[cb.index+8]
+		if b < bit {
+			cb.index += 9
+			return x | uint64(b)<<s, nil
+		}
+		x |= uint64(b&mask) << s
+		s += step
+
+		// i == 9
+		b = cb.buf[cb.index+9]
+		if b < bit {
+			if b > 1 {
+				return 0, ErrOverflow
+			}
+			cb.index += 10
+			return x | uint64(b)<<s, nil
+		} else if cb.len == 10 {
+			return 0, io.ErrUnexpectedEOF
+		}
+		for _, b := range cb.buf[cb.index+10:] {
+			if b < bit {
+				return 0, ErrOverflow
+			}
+		}
+		return 0, io.ErrUnexpectedEOF
+	}
+
+	// i == 0
+	b := cb.buf[cb.index]
+	if b < bit {
 		cb.index++
-		return uint64(buf[i]), nil
-	} else if len(buf)-i < 10 {
-		return cb.decodeVarintSlow()
+		return uint64(b), nil
+	} else if cb.len == 1 {
+		return 0, io.ErrUnexpectedEOF
 	}
+	x := uint64(b & mask)
+	var s uint = step
 
-	var b uint64
-	// we already checked the first byte
-	x := uint64(buf[i]) - 0x80
-	i++
-
-	b = uint64(buf[i])
-	i++
-	x += b << 7
-	if b&0x80 == 0 {
-		goto done
+	// i == 1
+	b = cb.buf[cb.index+1]
+	if b < bit {
+		cb.index += 2
+		return x | uint64(b)<<s, nil
+	} else if cb.len == 2 {
+		return 0, io.ErrUnexpectedEOF
 	}
-	x -= 0x80 << 7
+	x |= uint64(b&mask) << s
+	s += step
 
-	b = uint64(buf[i])
-	i++
-	x += b << 14
-	if b&0x80 == 0 {
-		goto done
+	// i == 2
+	b = cb.buf[cb.index+2]
+	if b < bit {
+		cb.index += 3
+		return x | uint64(b)<<s, nil
+	} else if cb.len == 3 {
+		return 0, io.ErrUnexpectedEOF
 	}
-	x -= 0x80 << 14
+	x |= uint64(b&mask) << s
+	s += step
 
-	b = uint64(buf[i])
-	i++
-	x += b << 21
-	if b&0x80 == 0 {
-		goto done
+	// i == 3
+	b = cb.buf[cb.index+3]
+	if b < bit {
+		cb.index += 4
+		return x | uint64(b)<<s, nil
+	} else if cb.len == 4 {
+		return 0, io.ErrUnexpectedEOF
 	}
-	x -= 0x80 << 21
+	x |= uint64(b&mask) << s
+	s += step
 
-	b = uint64(buf[i])
-	i++
-	x += b << 28
-	if b&0x80 == 0 {
-		goto done
+	// i == 4
+	b = cb.buf[cb.index+4]
+	if b < bit {
+		cb.index += 5
+		return x | uint64(b)<<s, nil
+	} else if cb.len == 5 {
+		return 0, io.ErrUnexpectedEOF
 	}
-	x -= 0x80 << 28
+	x |= uint64(b&mask) << s
+	s += step
 
-	b = uint64(buf[i])
-	i++
-	x += b << 35
-	if b&0x80 == 0 {
-		goto done
+	// i == 5
+	b = cb.buf[cb.index+5]
+	if b < bit {
+		cb.index += 6
+		return x | uint64(b)<<s, nil
+	} else if cb.len == 6 {
+		return 0, io.ErrUnexpectedEOF
 	}
-	x -= 0x80 << 35
+	x |= uint64(b&mask) << s
+	s += step
 
-	b = uint64(buf[i])
-	i++
-	x += b << 42
-	if b&0x80 == 0 {
-		goto done
+	// i == 6
+	b = cb.buf[cb.index+6]
+	if b < bit {
+		cb.index += 7
+		return x | uint64(b)<<s, nil
+	} else if cb.len == 7 {
+		return 0, io.ErrUnexpectedEOF
 	}
-	x -= 0x80 << 42
+	x |= uint64(b&mask) << s
+	s += step
 
-	b = uint64(buf[i])
-	i++
-	x += b << 49
-	if b&0x80 == 0 {
-		goto done
+	// i == 7
+	b = cb.buf[cb.index+7]
+	if b < bit {
+		cb.index += 8
+		return x | uint64(b)<<s, nil
+	} else if cb.len == 8 {
+		return 0, io.ErrUnexpectedEOF
 	}
-	x -= 0x80 << 49
+	x |= uint64(b&mask) << s
+	s += step
 
-	b = uint64(buf[i])
-	i++
-	x += b << 56
-	if b&0x80 == 0 {
-		goto done
+	// i == 8
+	b = cb.buf[cb.index+8]
+	if b < bit {
+		cb.index += 9
+		return x | uint64(b)<<s, nil
+	} else if cb.len == 9 {
+		return 0, io.ErrUnexpectedEOF
 	}
-	x -= 0x80 << 56
+	x |= uint64(b&mask) << s
+	s += step
 
-	b = uint64(buf[i])
-	i++
-	x += b << 63
-	if b&0x80 == 0 {
-		goto done
+	// i == 9
+	b = cb.buf[cb.index+9]
+	if b < bit {
+		if b > 1 {
+			return 0, ErrOverflow
+		}
+		cb.index += 10
+		return x | uint64(b)<<s, nil
+	} else if cb.len == 10 {
+		return 0, io.ErrUnexpectedEOF
 	}
-	// x -= 0x80 << 63 // Always zero.
-
-	return 0, ErrOverflow
-
-done:
-	cb.index = i
-	return x, nil
-}
-
-// DecodeTagAndWireType decodes a field tag and wire type from input.
-// This reads a varint and then extracts the two fields from the varint
-// value read.
-func (cb *Buffer) DecodeTagAndWireType() (tag int32, wireType WireType, err error) {
-	var v uint64
-	v, err = cb.DecodeVarint()
-	if err != nil {
-		return
+	for _, b := range cb.buf[cb.index+10:] {
+		if b < bit {
+			return 0, ErrOverflow
+		}
 	}
-	// low 7 bits is wire type
-	wireType = WireType(v & 7)
-	// rest is int32 tag number
-	v = v >> 3
-	if v > math.MaxInt32 {
-		err = fmt.Errorf("tag number out of range: %d", v)
-		return
-	}
-	tag = int32(v)
-	return
+	return 0, io.ErrUnexpectedEOF
 }
 
 // DecodeFixed64 reads a 64-bit integer from the Buffer.
@@ -190,7 +278,7 @@ func (cb *Buffer) DecodeTagAndWireType() (tag int32, wireType WireType, err erro
 func (cb *Buffer) DecodeFixed64() (x uint64, err error) {
 	// x, err already 0
 	i := cb.index + 8
-	if i < 0 || i > len(cb.buf) {
+	if i < 0 || i > cb.len {
 		err = io.ErrUnexpectedEOF
 		return
 	}
@@ -213,7 +301,7 @@ func (cb *Buffer) DecodeFixed64() (x uint64, err error) {
 func (cb *Buffer) DecodeFixed32() (x uint64, err error) {
 	// x, err already 0
 	i := cb.index + 4
-	if i < 0 || i > len(cb.buf) {
+	if i < 0 || i > cb.len {
 		err = io.ErrUnexpectedEOF
 		return
 	}
@@ -252,7 +340,7 @@ func (cb *Buffer) DecodeRawBytes(alloc bool) (buf []byte, err error) {
 		return nil, fmt.Errorf("proto: bad byte length %d", nb)
 	}
 	end := cb.index + nb
-	if end < cb.index || end > len(cb.buf) {
+	if end < cb.index || end > cb.len {
 		return nil, io.ErrUnexpectedEOF
 	}
 
@@ -316,7 +404,12 @@ func (cb *Buffer) findGroupEnd() (groupEnd int, dataEnd int, err error) {
 	for {
 		fieldStart := cb.index
 		// read a field tag
-		_, wireType, err := cb.DecodeTagAndWireType()
+		var v uint64
+		v, err = cb.DecodeVarint()
+		if err != nil {
+			return 0, 0, err
+		}
+		_, wireType, err := AsTagAndWireType(v)
 		if err != nil {
 			return 0, 0, err
 		}
@@ -368,4 +461,20 @@ func (cb *Buffer) findGroupEnd() (groupEnd int, dataEnd int, err error) {
 			return 0, 0, ErrBadWireType
 		}
 	}
+}
+
+// AsTagAndWireType converts the given varint in to a field number and wireType
+//
+// As of now, this function is inlined.  Please double check that any modifications do not modify the
+// inline eligibility
+func AsTagAndWireType(v uint64) (tag int32, wireType WireType, err error) {
+	// rest is int32 tag number
+	// low 7 bits is wire type
+	wireType = WireType(v & 7)
+	tag = int32(v >> 3)
+	if tag <= 0 {
+		err = ErrBadWireType // We return a constant error here as this allows the function to be inlined
+	}
+
+	return
 }

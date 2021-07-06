@@ -53,7 +53,7 @@ func (cb *Buffer) DecodeVarint() (uint64, error) {
 		bit  = 1 << 7
 		mask = bit - 1
 	)
-	if cb.len >= 10 { // no bound checks
+	if cb.len >= 10 {
 		// i == 0
 		b := cb.buf[cb.index]
 		if b < bit {

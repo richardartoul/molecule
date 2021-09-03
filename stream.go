@@ -18,7 +18,7 @@ const (
 	// defaultBufferSize is the default size for buffers used for embedded
 	// values, which must first be written to a buffer to determine their
 	// length.  This is not used if BufferFactory is set.
-	defaultBufferSize int = 1024 * 16
+	defaultBufferSize int = 1024 * 8
 )
 
 // A ProtoStream supports writing protobuf data in a streaming fashion.  Its methods

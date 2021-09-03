@@ -9,13 +9,13 @@ import (
 )
 
 const (
-	// wire types; see https://developers.google.com/protocol-buffers/docs/encoding
+	// Wire types; see https://developers.google.com/protocol-buffers/docs/encoding.
 	wtVarint          int = 0
 	wt64Bit           int = 1
 	wtLengthDelimited int = 2
 	wt32Bit           int = 5
 
-	// defaultBufferSize is the default size for buffers used for embedded
+	// The defaultBufferSize is the default size for buffers used for embedded
 	// values, which must first be written to a buffer to determine their
 	// length.  This is not used if BufferFactory is set.
 	defaultBufferSize int = 1024 * 8
@@ -26,27 +26,29 @@ const (
 //
 // ProtoStream instances are *not* threadsafe and *not* re-entrant.
 type ProtoStream struct {
-	// outputWriter is the writer to which the protobuf-encoded bytes are written
+	// The outputWriter is the writer to which the protobuf-encoded bytes are
+	// written.
 	outputWriter io.Writer
 
-	// scratchBuffer is a buffer used and re-used for generating output.  Each method
-	// should begin by resetting this buffer.
+	// The scratchBuffer is a buffer used and re-used for generating output.
+	// Each method should begin by resetting this buffer.
 	scratchBuffer []byte
 
-	// scratchArray is a second, very small array used for packed encodings.  It is large
-	// enough to fit two max-size varints (10 bytes each) without reallocation
+	// THe scratchArray is a second, very small array used for packed
+	// encodings.  It is large enough to fit two max-size varints (10 bytes
+	// each) without reallocation
 	scratchArray [20]byte
 
-	// childStream is a ProtoStream used to implement `Embedded`, and reused for
-	// multiple calls.
+	// The childStream is a ProtoStream used to implement `Embedded`, and
+	// reused for multiple calls.
 	childStream *ProtoStream
 
-	// childBuffer is the buffer to which `childStream` writes.
+	// The childBuffer is the buffer to which `childStream` writes.
 	childBuffer *bytes.Buffer
 
-	// BufferFactory creates new, empty buffers as needed.  Users may override
-	// this function to provide pre-initialized buffers of a larger size, or
-	// from a buffer pool, for example.
+	// The BufferFactory creates new, empty buffers as needed.  Users may
+	// override this function to provide pre-initialized buffers of a larger
+	// size, or from a buffer pool, for example.
 	BufferFactory func() []byte
 }
 
@@ -439,7 +441,7 @@ func (ps *ProtoStream) Embedded(fieldNumber int, inner func(*ProtoStream) error)
 	return ps.writeAll(ps.childBuffer.Bytes())
 }
 
-// writeScratch flushes the scratch buffer to output
+// writeScratch flushes the scratch buffer to output.
 func (ps *ProtoStream) writeScratch() error {
 	return ps.writeAll(ps.scratchBuffer)
 }
@@ -471,7 +473,7 @@ func (ps *ProtoStream) writeScratchAsPacked(fieldNumber int) error {
 	return nil
 }
 
-// writeAll writes an entire buffer to output
+// writeAll writes an entire buffer to output.
 func (ps *ProtoStream) writeAll(buf []byte) error {
 	for len(buf) > 0 {
 		n, err := ps.outputWriter.Write(buf)
@@ -484,7 +486,7 @@ func (ps *ProtoStream) writeAll(buf []byte) error {
 }
 
 // writeAllString writes an entire string to output, using io.WriteString
-// to avoid allocation
+// to avoid allocation.
 func (ps *ProtoStream) writeAllString(value string) error {
 	for len(value) > 0 {
 		n, err := io.WriteString(ps.outputWriter, value)
@@ -496,7 +498,7 @@ func (ps *ProtoStream) writeAllString(value string) error {
 	return nil
 }
 
-// encodeKeyToScratch encodes a protobuf key into ps.scratch
+// encodeKeyToScratch encodes a protobuf key into ps.scratch.
 func (ps *ProtoStream) encodeKeyToScratch(fieldNumber int, wireType int) {
 	ps.scratchBuffer = protowire.AppendVarint(ps.scratchBuffer, uint64(fieldNumber)<<3+uint64(wireType))
 }

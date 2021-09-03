@@ -4,31 +4,34 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/golang/protobuf/proto"
+	fuzz "github.com/google/gofuzz"
 	"github.com/richardartoul/molecule"
+	simple "github.com/richardartoul/molecule/src/proto"
 	testproto "github.com/richardartoul/molecule/src/proto"
 	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 )
 
 // values copied from the .proto file
-const fieldDub int = 1
-const fieldFlo int = 2
-const fieldI32 = 3
-const fieldI64 = 4
-const fieldU32 = 5
-const fieldU64 = 6
-const fieldS32 = 7
-const fieldS64 = 8
-const fieldF32 = 9
-const fieldF64 = 10
-const fieldSF32 = 11
-const fieldSF64 = 12
-const fieldBoo = 13
-const fieldStr = 14
-const fieldByt = 15
-const fieldRepI64Packed = 16
+const fieldDouble int = 1
+const fieldFloat int = 2
+const fieldInt32 = 3
+const fieldInt64 = 4
+const fieldUint32 = 5
+const fieldUint64 = 6
+const fieldSint32 = 7
+const fieldSint64 = 8
+const fieldFixed32 = 9
+const fieldFixed64 = 10
+const fieldSfixed32 = 11
+const fieldSfixed64 = 12
+const fieldBool = 13
+const fieldString = 14
+const fieldBytes = 15
+const fieldRepeatedInt64Packed = 16
 
 // Test that a simple message encoding properly decodes using the generated
 // protofbuf code.  This function should test all proto types.
@@ -37,22 +40,22 @@ func TestSimpleEncoding(t *testing.T) {
 	ps := molecule.NewProtoStream()
 	ps.Reset(output)
 
-	require.NoError(t, ps.Double(fieldDub, 3.14))
-	require.NoError(t, ps.Float(fieldFlo, 3.14))
-	require.NoError(t, ps.Int32(fieldI32, int32(-10)))
-	require.NoError(t, ps.Int64(fieldI64, int64(-11)))
-	require.NoError(t, ps.Uint32(fieldU32, uint32(12)))
-	require.NoError(t, ps.Uint64(fieldU64, uint64(13)))
-	require.NoError(t, ps.Sint32(fieldS32, int32(-12)))
-	require.NoError(t, ps.Sint64(fieldS64, int64(-13)))
-	require.NoError(t, ps.Fixed32(fieldF32, uint32(22)))
-	require.NoError(t, ps.Fixed64(fieldF64, uint64(23)))
-	require.NoError(t, ps.Sfixed32(fieldSF32, int32(-22)))
-	require.NoError(t, ps.Sfixed64(fieldSF64, int64(-23)))
-	require.NoError(t, ps.Bool(fieldBoo, true))
-	require.NoError(t, ps.String(fieldStr, "s"))
-	require.NoError(t, ps.Bytes(fieldByt, []byte("b")))
-	require.NoError(t, ps.Int64Packed(fieldRepI64Packed, []int64{-1, 2, 3}))
+	require.NoError(t, ps.Double(fieldDouble, 3.14))
+	require.NoError(t, ps.Float(fieldFloat, 3.14))
+	require.NoError(t, ps.Int32(fieldInt32, int32(-10)))
+	require.NoError(t, ps.Int64(fieldInt64, int64(-11)))
+	require.NoError(t, ps.Uint32(fieldUint32, uint32(12)))
+	require.NoError(t, ps.Uint64(fieldUint64, uint64(13)))
+	require.NoError(t, ps.Sint32(fieldSint32, int32(-12)))
+	require.NoError(t, ps.Sint64(fieldSint64, int64(-13)))
+	require.NoError(t, ps.Fixed32(fieldFixed32, uint32(22)))
+	require.NoError(t, ps.Fixed64(fieldFixed64, uint64(23)))
+	require.NoError(t, ps.Sfixed32(fieldSfixed32, int32(-22)))
+	require.NoError(t, ps.Sfixed64(fieldSfixed64, int64(-23)))
+	require.NoError(t, ps.Bool(fieldBool, true))
+	require.NoError(t, ps.String(fieldString, "s"))
+	require.NoError(t, ps.Bytes(fieldBytes, []byte("b")))
+	require.NoError(t, ps.Int64Packed(fieldRepeatedInt64Packed, []int64{-1, 2, 3}))
 
 	buf := output.Bytes()
 	var res testproto.Simple
@@ -85,21 +88,21 @@ func TestSimpleEncodingZero(t *testing.T) {
 	ps := molecule.NewProtoStream()
 	ps.Reset(output)
 
-	require.NoError(t, ps.Double(fieldDub, 0.0))
-	require.NoError(t, ps.Float(fieldFlo, 0.0))
-	require.NoError(t, ps.Int32(fieldI32, int32(0)))
-	require.NoError(t, ps.Int64(fieldI64, int64(0)))
-	require.NoError(t, ps.Uint32(fieldU32, uint32(0)))
-	require.NoError(t, ps.Uint64(fieldU64, uint64(0)))
-	require.NoError(t, ps.Sint32(fieldS32, int32(0)))
-	require.NoError(t, ps.Sint64(fieldS64, int64(0)))
-	require.NoError(t, ps.Fixed32(fieldF32, uint32(0)))
-	require.NoError(t, ps.Fixed64(fieldF64, uint64(0)))
-	require.NoError(t, ps.Sfixed32(fieldSF32, int32(0)))
-	require.NoError(t, ps.Sfixed64(fieldSF64, int64(0)))
-	require.NoError(t, ps.Bool(fieldBoo, false))
-	require.NoError(t, ps.String(fieldStr, ""))
-	require.NoError(t, ps.Bytes(fieldByt, []byte("")))
+	require.NoError(t, ps.Double(fieldDouble, 0.0))
+	require.NoError(t, ps.Float(fieldFloat, 0.0))
+	require.NoError(t, ps.Int32(fieldInt32, int32(0)))
+	require.NoError(t, ps.Int64(fieldInt64, int64(0)))
+	require.NoError(t, ps.Uint32(fieldUint32, uint32(0)))
+	require.NoError(t, ps.Uint64(fieldUint64, uint64(0)))
+	require.NoError(t, ps.Sint32(fieldSint32, int32(0)))
+	require.NoError(t, ps.Sint64(fieldSint64, int64(0)))
+	require.NoError(t, ps.Fixed32(fieldFixed32, uint32(0)))
+	require.NoError(t, ps.Fixed64(fieldFixed64, uint64(0)))
+	require.NoError(t, ps.Sfixed32(fieldSfixed32, int32(0)))
+	require.NoError(t, ps.Sfixed64(fieldSfixed64, int64(0)))
+	require.NoError(t, ps.Bool(fieldBool, false))
+	require.NoError(t, ps.String(fieldString, ""))
+	require.NoError(t, ps.Bytes(fieldBytes, []byte("")))
 
 	buf := output.Bytes()
 	// all of those are zero values, so nothing should have been written
@@ -112,18 +115,18 @@ func TestPackedEncodingZero(t *testing.T) {
 	ps := molecule.NewProtoStream()
 	ps.Reset(output)
 
-	require.NoError(t, ps.DoublePacked(fieldDub, []float64{}))
-	require.NoError(t, ps.FloatPacked(fieldFlo, []float32{}))
-	require.NoError(t, ps.Int32Packed(fieldI32, []int32{}))
-	require.NoError(t, ps.Int64Packed(fieldI64, []int64{}))
-	require.NoError(t, ps.Uint32Packed(fieldU32, []uint32{}))
-	require.NoError(t, ps.Uint64Packed(fieldU64, []uint64{}))
-	require.NoError(t, ps.Sint32Packed(fieldS32, []int32{}))
-	require.NoError(t, ps.Sint64Packed(fieldS64, []int64{}))
-	require.NoError(t, ps.Fixed32Packed(fieldF32, []uint32{}))
-	require.NoError(t, ps.Fixed64Packed(fieldF64, []uint64{}))
-	require.NoError(t, ps.Sfixed32Packed(fieldSF32, []int32{}))
-	require.NoError(t, ps.Sfixed64Packed(fieldSF64, []int64{}))
+	require.NoError(t, ps.DoublePacked(fieldDouble, []float64{}))
+	require.NoError(t, ps.FloatPacked(fieldFloat, []float32{}))
+	require.NoError(t, ps.Int32Packed(fieldInt32, []int32{}))
+	require.NoError(t, ps.Int64Packed(fieldInt64, []int64{}))
+	require.NoError(t, ps.Uint32Packed(fieldUint32, []uint32{}))
+	require.NoError(t, ps.Uint64Packed(fieldUint64, []uint64{}))
+	require.NoError(t, ps.Sint32Packed(fieldSint32, []int32{}))
+	require.NoError(t, ps.Sint64Packed(fieldSint64, []int64{}))
+	require.NoError(t, ps.Fixed32Packed(fieldFixed32, []uint32{}))
+	require.NoError(t, ps.Fixed64Packed(fieldFixed64, []uint64{}))
+	require.NoError(t, ps.Sfixed32Packed(fieldSfixed32, []int32{}))
+	require.NoError(t, ps.Sfixed64Packed(fieldSfixed64, []int64{}))
 
 	buf := output.Bytes()
 	// all of those are zero values, so nothing should have been written
@@ -147,9 +150,9 @@ func TestPacking(t *testing.T) {
 
 	t.Run("DoublePacked", func(t *testing.T) {
 		output.Reset()
-		require.NoError(t, ps.DoublePacked(fieldDub, []float64{3.14, 1.414}))
+		require.NoError(t, ps.DoublePacked(fieldDouble, []float64{3.14, 1.414}))
 		assertBytes(t, []byte{
-			key(fieldDub),
+			key(fieldDouble),
 			0x10,                                          // length
 			0x1f, 0x85, 0xeb, 0x51, 0xb8, 0x1e, 0x9, 0x40, // 3.14 as fixed64
 			0x39, 0xb4, 0xc8, 0x76, 0xbe, 0x9f, 0xf6, 0x3f, // 1.414 as fixed64
@@ -158,9 +161,9 @@ func TestPacking(t *testing.T) {
 
 	t.Run("FloatPacked", func(t *testing.T) {
 		output.Reset()
-		require.NoError(t, ps.FloatPacked(fieldFlo, []float32{3.14, 1.414}))
+		require.NoError(t, ps.FloatPacked(fieldFloat, []float32{3.14, 1.414}))
 		assertBytes(t, []byte{
-			key(fieldFlo),
+			key(fieldFloat),
 			0x8,                    // length
 			0xc3, 0xf5, 0x48, 0x40, // 3.14 as fixed32
 			0xf4, 0xfd, 0xb4, 0x3f, // 1.414 as fixed32
@@ -169,9 +172,9 @@ func TestPacking(t *testing.T) {
 
 	t.Run("Int32Packed", func(t *testing.T) {
 		output.Reset()
-		require.NoError(t, ps.Int32Packed(fieldI32, []int32{int32(-12), int32(12), int32(-13)}))
+		require.NoError(t, ps.Int32Packed(fieldInt32, []int32{int32(-12), int32(12), int32(-13)}))
 		assertBytes(t, []byte{
-			key(fieldI32),
+			key(fieldInt32),
 			0x15,                                                       // length
 			0xf4, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01, // -12 (little-endian varint)
 			0x0c,                                                       // 12
@@ -181,9 +184,9 @@ func TestPacking(t *testing.T) {
 
 	t.Run("Int64Packed", func(t *testing.T) {
 		output.Reset()
-		require.NoError(t, ps.Int64Packed(fieldI64, []int64{int64(-12), int64(12), int64(-13)}))
+		require.NoError(t, ps.Int64Packed(fieldInt64, []int64{int64(-12), int64(12), int64(-13)}))
 		assertBytes(t, []byte{
-			key(fieldI64),
+			key(fieldInt64),
 			0x15,                                                      // length
 			0xf4, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1, // -12
 			0x0c,                                                      // 12
@@ -193,9 +196,9 @@ func TestPacking(t *testing.T) {
 
 	t.Run("Uint32Packed", func(t *testing.T) {
 		output.Reset()
-		require.NoError(t, ps.Uint32Packed(fieldU32, []uint32{uint32(1), uint32(2), uint32(3)}))
+		require.NoError(t, ps.Uint32Packed(fieldUint32, []uint32{uint32(1), uint32(2), uint32(3)}))
 		assertBytes(t, []byte{
-			key(fieldU32),
+			key(fieldUint32),
 			0x3, // length
 			0x1,
 			0x2,
@@ -205,9 +208,9 @@ func TestPacking(t *testing.T) {
 
 	t.Run("Uint64Packed", func(t *testing.T) {
 		output.Reset()
-		require.NoError(t, ps.Uint64Packed(fieldU64, []uint64{uint64(1), uint64(2), uint64(3)}))
+		require.NoError(t, ps.Uint64Packed(fieldUint64, []uint64{uint64(1), uint64(2), uint64(3)}))
 		assertBytes(t, []byte{
-			key(fieldU64),
+			key(fieldUint64),
 			0x3, // length
 			0x1,
 			0x2,
@@ -217,9 +220,9 @@ func TestPacking(t *testing.T) {
 
 	t.Run("Sint32Packed", func(t *testing.T) {
 		output.Reset()
-		require.NoError(t, ps.Sint32Packed(fieldS32, []int32{int32(-12), int32(12), int32(-13)}))
+		require.NoError(t, ps.Sint32Packed(fieldSint32, []int32{int32(-12), int32(12), int32(-13)}))
 		assertBytes(t, []byte{
-			key(fieldS32),
+			key(fieldSint32),
 			0x03, // length
 			0x17, // zigzag encoding of -12
 			0x18, // 12
@@ -229,9 +232,9 @@ func TestPacking(t *testing.T) {
 
 	t.Run("Sint64Packed", func(t *testing.T) {
 		output.Reset()
-		require.NoError(t, ps.Sint64Packed(fieldS64, []int64{int64(-12), int64(12), int64(-13)}))
+		require.NoError(t, ps.Sint64Packed(fieldSint64, []int64{int64(-12), int64(12), int64(-13)}))
 		assertBytes(t, []byte{
-			key(fieldS64),
+			key(fieldSint64),
 			0x03, // length
 			0x17,
 			0x18,
@@ -241,9 +244,9 @@ func TestPacking(t *testing.T) {
 
 	t.Run("Fixed32Packed", func(t *testing.T) {
 		output.Reset()
-		require.NoError(t, ps.Fixed32Packed(fieldF32, []uint32{uint32(12), uint32(13), uint32(14)}))
+		require.NoError(t, ps.Fixed32Packed(fieldFixed32, []uint32{uint32(12), uint32(13), uint32(14)}))
 		assertBytes(t, []byte{
-			key(fieldF32),
+			key(fieldFixed32),
 			0xc,                // length
 			0xc, 0x0, 0x0, 0x0, // 12
 			0xd, 0x0, 0x0, 0x0, // 13
@@ -253,9 +256,9 @@ func TestPacking(t *testing.T) {
 
 	t.Run("Fixed64Packed", func(t *testing.T) {
 		output.Reset()
-		require.NoError(t, ps.Fixed64Packed(fieldF64, []uint64{uint64(12), uint64(13), uint64(14)}))
+		require.NoError(t, ps.Fixed64Packed(fieldFixed64, []uint64{uint64(12), uint64(13), uint64(14)}))
 		assertBytes(t, []byte{
-			key(fieldF64),
+			key(fieldFixed64),
 			0x18,                                   // length
 			0xc, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, // 12
 			0xd, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, // 13
@@ -265,9 +268,9 @@ func TestPacking(t *testing.T) {
 
 	t.Run("Sfixed32Packed", func(t *testing.T) {
 		output.Reset()
-		require.NoError(t, ps.Sfixed32Packed(fieldSF32, []int32{int32(12), int32(-13), int32(14)}))
+		require.NoError(t, ps.Sfixed32Packed(fieldSfixed32, []int32{int32(12), int32(-13), int32(14)}))
 		assertBytes(t, []byte{
-			key(fieldSF32),
+			key(fieldSfixed32),
 			0xc,                // length
 			0xc, 0x0, 0x0, 0x0, // 12
 			0xf3, 0xff, 0xff, 0xff, // -13
@@ -277,9 +280,9 @@ func TestPacking(t *testing.T) {
 
 	t.Run("Sfixed64Packed", func(t *testing.T) {
 		output.Reset()
-		require.NoError(t, ps.Sfixed64Packed(fieldSF64, []int64{int64(12), int64(-13), int64(14)}))
+		require.NoError(t, ps.Sfixed64Packed(fieldSfixed64, []int64{int64(12), int64(-13), int64(14)}))
 		assertBytes(t, []byte{
-			key(fieldSF64),
+			key(fieldSfixed64),
 			0x18,                                   // length
 			0xc, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, // 12
 			0xf3, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // -13
@@ -299,22 +302,22 @@ func BenchmarkSimple(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		output.Reset()
-		ps.Double(fieldDub, 3.14)
-		ps.Float(fieldFlo, 3.14)
-		ps.Int32(fieldI32, int32(-10))
-		ps.Int64(fieldI64, int64(-11))
-		ps.Uint32(fieldU32, uint32(12))
-		ps.Uint64(fieldU64, uint64(13))
-		ps.Sint32(fieldS32, int32(-12))
-		ps.Sint64(fieldS64, int64(-13))
-		ps.Fixed32(fieldF32, uint32(22))
-		ps.Fixed64(fieldF64, uint64(23))
-		ps.Sfixed32(fieldSF32, int32(-22))
-		ps.Sfixed64(fieldSF64, int64(-23))
-		ps.Bool(fieldBoo, true)
-		ps.String(fieldStr, "s")
-		ps.Bytes(fieldByt, []byte("b"))
-		ps.Int64Packed(fieldRepI64Packed, []int64{99, -99})
+		ps.Double(fieldDouble, 3.14)
+		ps.Float(fieldFloat, 3.14)
+		ps.Int32(fieldInt32, int32(-10))
+		ps.Int64(fieldInt64, int64(-11))
+		ps.Uint32(fieldUint32, uint32(12))
+		ps.Uint64(fieldUint64, uint64(13))
+		ps.Sint32(fieldSint32, int32(-12))
+		ps.Sint64(fieldSint64, int64(-13))
+		ps.Fixed32(fieldFixed32, uint32(22))
+		ps.Fixed64(fieldFixed64, uint64(23))
+		ps.Sfixed32(fieldSfixed32, int32(-22))
+		ps.Sfixed64(fieldSfixed64, int64(-23))
+		ps.Bool(fieldBool, true)
+		ps.String(fieldString, "s")
+		ps.Bytes(fieldBytes, []byte("b"))
+		ps.Int64Packed(fieldRepeatedInt64Packed, []int64{99, -99})
 	}
 }
 
@@ -338,7 +341,7 @@ func BenchmarkPacking(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		output.Reset()
-		err := ps.DoublePacked(fieldDub, floats)
+		err := ps.DoublePacked(fieldDouble, floats)
 		if err != nil {
 			panic(err)
 		}
@@ -392,4 +395,52 @@ func TestEmbedding(t *testing.T) {
 	require.Equal(t, "hello", res.NestedMessage.StringField)
 	require.Equal(t, int64(5), res.NestedMessage.Int64Field)
 	require.Equal(t, []int64{104, 101, 108, 108, 111}, res.NestedMessage.RepeatedInt64Field)
+}
+
+func TestProtoStreamFuzzing(t *testing.T) {
+	var (
+		seed      = time.Now().UnixNano()
+		fuzzer    = fuzz.NewWithSeed(seed)
+		numFuzzes = 100000
+	)
+	defer func() {
+		// Log the seed to make debugging failures easier.
+		t.Logf("Running test with seed: %d", seed)
+	}()
+	// Limit slice size to prevent tests from taking too long.
+	fuzzer.NumElements(0, 100)
+
+	for i := 0; i < numFuzzes; i++ {
+		m := &simple.Simple{}
+		fuzzer.Fuzz(&m)
+		if m == nil {
+			continue
+		}
+
+		marshaled := bytes.NewBuffer([]byte{})
+		ps := molecule.NewProtoStream()
+		ps.Reset(marshaled)
+
+		require.NoError(t, ps.Double(fieldDouble, m.Double))
+		require.NoError(t, ps.Float(fieldFloat, m.Float))
+		require.NoError(t, ps.Int32(fieldInt32, m.Int32))
+		require.NoError(t, ps.Int64(fieldInt64, m.Int64))
+		require.NoError(t, ps.Uint32(fieldUint32, m.Uint32))
+		require.NoError(t, ps.Uint64(fieldUint64, m.Uint64))
+		require.NoError(t, ps.Sint32(fieldSint32, m.Sint32))
+		require.NoError(t, ps.Sint64(fieldSint64, m.Sint64))
+		require.NoError(t, ps.Fixed32(fieldFixed32, m.Fixed32))
+		require.NoError(t, ps.Fixed64(fieldFixed64, m.Fixed64))
+		require.NoError(t, ps.Sfixed32(fieldSfixed32, m.Sfixed32))
+		require.NoError(t, ps.Sfixed64(fieldSfixed64, m.Sfixed64))
+		require.NoError(t, ps.Bool(fieldBool, m.Bool))
+		require.NoError(t, ps.String(fieldString, m.String_))
+		require.NoError(t, ps.Bytes(fieldBytes, m.Bytes))
+		require.NoError(t, ps.Int64Packed(fieldRepeatedInt64Packed, m.RepeatedInt64Packed))
+
+		m2 := &simple.Simple{}
+		require.NoError(t, proto.Unmarshal(marshaled.Bytes(), m2))
+
+		require.True(t, proto.Equal(m, m2))
+	}
 }

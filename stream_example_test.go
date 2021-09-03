@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-
-	"github.com/golang/protobuf/proto"
 )
 
 func ExampleNew() {
@@ -42,20 +40,7 @@ func ExampleNew() {
 		panic(err)
 	}
 
-	// Unmarshal that to verify it was encoded correctly
-	var res SearchRequest
-	err = proto.Unmarshal(output.Bytes(), &res)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("query: %s\n", res.Query)
-	fmt.Printf("page_number: %d\n", res.PageNumber)
-	fmt.Printf("result_per_page: %d\n", res.ResultPerPage)
-	// Output:
-	// query: q=streaming+protobufs
-	// page_number: 2
-	// result_per_page: 100
+	// The encoded result is in `output.Bytes()`.
 }
 
 func ExampleProtoStream_Embedded() {
@@ -133,18 +118,7 @@ func ExampleProtoStream_Embedded() {
 		panic(err)
 	}
 
-	// let's unmarshal that and see the result
-	var res MultiSearch
-	err = proto.Unmarshal(output.Bytes(), &res)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("query 0: %s\n", res.Request[0].Query)
-	fmt.Printf("query 1: %s\n", res.Request[1].Query)
-	// Output:
-	// query 0: author=octavia+butler
-	// query 1: author=margaret+atwood
+	// The encoded result is in `output.Bytes()`.
 }
 
 func ExampleProtoStream_Sint32Packed() {

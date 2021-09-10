@@ -62,6 +62,7 @@ func NewProtoStream(outputWriter io.Writer) *ProtoStream {
 // then the protostream cannot be used until Reset is called with a non-nil value.
 func (ps *ProtoStream) Reset(outputWriter io.Writer) {
 	ps.outputWriter = outputWriter
+	ps.scratchBuffer = ps.scratchBuffer[:0]
 }
 
 // Double writes a value of proto type double to the stream.

@@ -28,7 +28,7 @@ type ProtoStream struct {
 	// Each method should begin by resetting this buffer.
 	scratchBuffer []byte
 
-	// THe scratchArray is a second, very small array used for packed
+	// The scratchArray is a second, very small array used for packed
 	// encodings.  It is large enough to fit two max-size varints (10 bytes
 	// each) without reallocation
 	scratchArray [20]byte
@@ -407,14 +407,13 @@ func (ps *ProtoStream) Bytes(fieldNumber int, value []byte) error {
 // NOTE: if the inner function creates an empty message (such as for a struct
 // at its zero value), that empty message will still be added to the stream.
 func (ps *ProtoStream) Embedded(fieldNumber int, inner func(*ProtoStream) error) error {
-	// create a new child, writing to a buffer, if one does not already exist
+	// Create a new child, writing to a buffer, if one does not already exist.
 	if ps.childStream == nil {
 		ps.childBuffer = bytes.NewBuffer(ps.BufferFactory())
-		ps.childStream = NewProtoStream()
-		ps.childStream.Reset(ps.childBuffer)
+		ps.childStream = NewProtoStream(ps.childBuffer)
 	}
 
-	// write the embedded value using the child, leaving the result in ps.childBuffer
+	// Write the embedded value using the child, leaving the result in ps.childBuffer.
 	ps.childBuffer.Reset()
 	err := inner(ps.childStream)
 	if err != nil {
@@ -425,13 +424,13 @@ func (ps *ProtoStream) Embedded(fieldNumber int, inner func(*ProtoStream) error)
 	ps.encodeKeyToScratch(fieldNumber, protowire.BytesType)
 	ps.scratchBuffer = protowire.AppendVarint(ps.scratchBuffer, uint64(ps.childBuffer.Len()))
 
-	// write the key and length prefix
+	// Write the key and length prefix.
 	err = ps.writeScratch()
 	if err != nil {
 		return err
 	}
 
-	// and write out the embedded message
+	// Write out the embedded message.
 	return ps.writeAll(ps.childBuffer.Bytes())
 }
 
@@ -452,13 +451,13 @@ func (ps *ProtoStream) writeScratchAsPacked(fieldNumber int) error {
 	keysize = protowire.AppendVarint(keysize, uint64((fieldNumber<<3)|int(protowire.BytesType)))
 	keysize = protowire.AppendVarint(keysize, uint64(len(ps.scratchBuffer)))
 
-	// write the key and length prefix
+	// Write the key and length prefix.
 	err := ps.writeAll(keysize)
 	if err != nil {
 		return err
 	}
 
-	// write out the embedded message
+	// Write out the embedded message.
 	err = ps.writeScratch()
 	if err != nil {
 		return err

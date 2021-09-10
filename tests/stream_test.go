@@ -37,8 +37,7 @@ const fieldRepeatedInt64Packed = 16
 // protofbuf code.  This function should test all proto types.
 func TestSimpleEncoding(t *testing.T) {
 	output := bytes.NewBuffer([]byte{})
-	ps := molecule.NewProtoStream()
-	ps.Reset(output)
+	ps := molecule.NewProtoStream(output)
 
 	require.NoError(t, ps.Double(fieldDouble, 3.14))
 	require.NoError(t, ps.Float(fieldFloat, 3.14))
@@ -80,13 +79,19 @@ func TestSimpleEncoding(t *testing.T) {
 	assert.Equal(t, int64(-1), res.RepeatedInt64Packed[0])
 	assert.Equal(t, int64(2), res.RepeatedInt64Packed[1])
 	assert.Equal(t, int64(3), res.RepeatedInt64Packed[2])
+
+	// test Reset by sending subsequent output to a new buffer
+	output2 := bytes.NewBuffer([]byte{})
+	ps.Reset(output2)
+	require.NoError(t, ps.String(fieldString, "reset"))
+	require.NoError(t, proto.Unmarshal(output2.Bytes(), &res))
+	assert.Equal(t, "reset", res.String_)
 }
 
 // Test that the zero values for each field do not result in any encoded data.
 func TestSimpleEncodingZero(t *testing.T) {
 	output := bytes.NewBuffer([]byte{})
-	ps := molecule.NewProtoStream()
-	ps.Reset(output)
+	ps := molecule.NewProtoStream(output)
 
 	require.NoError(t, ps.Double(fieldDouble, 0.0))
 	require.NoError(t, ps.Float(fieldFloat, 0.0))
@@ -112,8 +117,7 @@ func TestSimpleEncodingZero(t *testing.T) {
 // Test that the zero values for packed fields do not result in any encoded data.
 func TestPackedEncodingZero(t *testing.T) {
 	output := bytes.NewBuffer([]byte{})
-	ps := molecule.NewProtoStream()
-	ps.Reset(output)
+	ps := molecule.NewProtoStream(output)
 
 	require.NoError(t, ps.DoublePacked(fieldDouble, []float64{}))
 	require.NoError(t, ps.FloatPacked(fieldFloat, []float32{}))
@@ -136,8 +140,7 @@ func TestPackedEncodingZero(t *testing.T) {
 // Test that *Packed functions work.
 func TestPacking(t *testing.T) {
 	output := bytes.NewBuffer([]byte{})
-	ps := molecule.NewProtoStream()
-	ps.Reset(output)
+	ps := molecule.NewProtoStream(output)
 
 	assertBytes := func(t *testing.T, exp []byte, got []byte) {
 		assert.Equal(t, fmt.Sprintf("%#v", exp), fmt.Sprintf("%#v", got))
@@ -294,8 +297,7 @@ func TestPacking(t *testing.T) {
 // Microbenchmark simple encoding performance
 func BenchmarkSimple(b *testing.B) {
 	output := bytes.NewBuffer([]byte{})
-	ps := molecule.NewProtoStream()
-	ps.Reset(output)
+	ps := molecule.NewProtoStream(output)
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -324,8 +326,7 @@ func BenchmarkSimple(b *testing.B) {
 // Microbenchmark packing performance
 func BenchmarkPacking(b *testing.B) {
 	output := bytes.NewBuffer([]byte{})
-	ps := molecule.NewProtoStream()
-	ps.Reset(output)
+	ps := molecule.NewProtoStream(output)
 
 	const packSize = 102400
 	floats := make([]float64, 0, packSize)
@@ -351,8 +352,7 @@ func BenchmarkPacking(b *testing.B) {
 // Test ps.Embedded embedding a repeated message
 func TestEmbedding(t *testing.T) {
 	output := bytes.NewBuffer([]byte{})
-	ps := molecule.NewProtoStream()
-	ps.Reset(output)
+	ps := molecule.NewProtoStream(output)
 
 	// values copied from the .proto file
 	const fieldNestedMessage = 1
@@ -418,8 +418,7 @@ func TestProtoStreamFuzzing(t *testing.T) {
 		}
 
 		marshaled := bytes.NewBuffer([]byte{})
-		ps := molecule.NewProtoStream()
-		ps.Reset(marshaled)
+		ps := molecule.NewProtoStream(marshaled)
 
 		require.NoError(t, ps.Double(fieldDouble, m.Double))
 		require.NoError(t, ps.Float(fieldFloat, m.Float))

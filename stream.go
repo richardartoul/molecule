@@ -46,20 +46,20 @@ type ProtoStream struct {
 	BufferFactory func() []byte
 }
 
-// NewProtoStream creates a new ProtoStream.  This ProtoStream _cannot be used_ until
-// Reset is called.
-func NewProtoStream() *ProtoStream {
+// NewProtoStream creates a new ProtoStream writing to the given Writer.  If the
+// writer is nil, the stream cannot be used until it has been set with `Reset`.
+func NewProtoStream(outputWriter io.Writer) *ProtoStream {
 	return &ProtoStream{
 		scratchBuffer: make([]byte, 0, defaultBufferSize),
 		childStream:   nil,
 		childBuffer:   nil,
+		outputWriter:  outputWriter,
 		BufferFactory: func() []byte { return make([]byte, 0, defaultBufferSize) },
 	}
 }
 
-// Reset sets the Writer to which this ProtoStream streams.  This must be
-// called before any other methods, and can be called again to change the
-// output Writer.
+// Reset sets the Writer to which this ProtoStream streams.  If the writer is nil,
+// then the protostream cannot be used until Reset is called with a non-nil value.
 func (ps *ProtoStream) Reset(outputWriter io.Writer) {
 	ps.outputWriter = outputWriter
 }

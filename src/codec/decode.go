@@ -45,7 +45,7 @@ func init() {
 //
 // This implementation is inlined from https://github.com/dennwc/varint to avoid the call-site overhead
 func (cb *Buffer) DecodeVarint() (uint64, error) {
-	if cb.len == 0 {
+	if cb.Len() == 0 {
 		return 0, io.ErrUnexpectedEOF
 	}
 	const (
@@ -53,7 +53,7 @@ func (cb *Buffer) DecodeVarint() (uint64, error) {
 		bit  = 1 << 7
 		mask = bit - 1
 	)
-	if cb.len >= 10 {
+	if cb.Len() >= 10 {
 		// i == 0
 		b := cb.buf[cb.index]
 		if b < bit {
@@ -143,7 +143,7 @@ func (cb *Buffer) DecodeVarint() (uint64, error) {
 			}
 			cb.index += 10
 			return x | uint64(b)<<s, nil
-		} else if cb.len == 10 {
+		} else if cb.Len() == 10 {
 			return 0, io.ErrUnexpectedEOF
 		}
 		for _, b := range cb.buf[cb.index+10:] {
@@ -159,7 +159,7 @@ func (cb *Buffer) DecodeVarint() (uint64, error) {
 	if b < bit {
 		cb.index++
 		return uint64(b), nil
-	} else if cb.len == 1 {
+	} else if cb.Len() == 1 {
 		return 0, io.ErrUnexpectedEOF
 	}
 	x := uint64(b & mask)
@@ -170,7 +170,7 @@ func (cb *Buffer) DecodeVarint() (uint64, error) {
 	if b < bit {
 		cb.index += 2
 		return x | uint64(b)<<s, nil
-	} else if cb.len == 2 {
+	} else if cb.Len() == 2 {
 		return 0, io.ErrUnexpectedEOF
 	}
 	x |= uint64(b&mask) << s
@@ -181,7 +181,7 @@ func (cb *Buffer) DecodeVarint() (uint64, error) {
 	if b < bit {
 		cb.index += 3
 		return x | uint64(b)<<s, nil
-	} else if cb.len == 3 {
+	} else if cb.Len() == 3 {
 		return 0, io.ErrUnexpectedEOF
 	}
 	x |= uint64(b&mask) << s
@@ -192,7 +192,7 @@ func (cb *Buffer) DecodeVarint() (uint64, error) {
 	if b < bit {
 		cb.index += 4
 		return x | uint64(b)<<s, nil
-	} else if cb.len == 4 {
+	} else if cb.Len() == 4 {
 		return 0, io.ErrUnexpectedEOF
 	}
 	x |= uint64(b&mask) << s
@@ -203,7 +203,7 @@ func (cb *Buffer) DecodeVarint() (uint64, error) {
 	if b < bit {
 		cb.index += 5
 		return x | uint64(b)<<s, nil
-	} else if cb.len == 5 {
+	} else if cb.Len() == 5 {
 		return 0, io.ErrUnexpectedEOF
 	}
 	x |= uint64(b&mask) << s
@@ -214,7 +214,7 @@ func (cb *Buffer) DecodeVarint() (uint64, error) {
 	if b < bit {
 		cb.index += 6
 		return x | uint64(b)<<s, nil
-	} else if cb.len == 6 {
+	} else if cb.Len() == 6 {
 		return 0, io.ErrUnexpectedEOF
 	}
 	x |= uint64(b&mask) << s
@@ -225,7 +225,7 @@ func (cb *Buffer) DecodeVarint() (uint64, error) {
 	if b < bit {
 		cb.index += 7
 		return x | uint64(b)<<s, nil
-	} else if cb.len == 7 {
+	} else if cb.Len() == 7 {
 		return 0, io.ErrUnexpectedEOF
 	}
 	x |= uint64(b&mask) << s
@@ -236,7 +236,7 @@ func (cb *Buffer) DecodeVarint() (uint64, error) {
 	if b < bit {
 		cb.index += 8
 		return x | uint64(b)<<s, nil
-	} else if cb.len == 8 {
+	} else if cb.Len() == 8 {
 		return 0, io.ErrUnexpectedEOF
 	}
 	x |= uint64(b&mask) << s
@@ -247,7 +247,7 @@ func (cb *Buffer) DecodeVarint() (uint64, error) {
 	if b < bit {
 		cb.index += 9
 		return x | uint64(b)<<s, nil
-	} else if cb.len == 9 {
+	} else if cb.Len() == 9 {
 		return 0, io.ErrUnexpectedEOF
 	}
 	x |= uint64(b&mask) << s
@@ -261,7 +261,7 @@ func (cb *Buffer) DecodeVarint() (uint64, error) {
 		}
 		cb.index += 10
 		return x | uint64(b)<<s, nil
-	} else if cb.len == 10 {
+	} else if cb.Len() == 10 {
 		return 0, io.ErrUnexpectedEOF
 	}
 	for _, b := range cb.buf[cb.index+10:] {

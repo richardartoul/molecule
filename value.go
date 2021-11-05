@@ -145,6 +145,10 @@ func (v *Value) AsBytesSafe() ([]byte, error) {
 
 func unsafeBytesToString(b []byte) string {
 	bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
-	sh := reflect.StringHeader{Data: bh.Data, Len: bh.Len}
-	return *(*string)(unsafe.Pointer(&sh))
+
+	var s string
+	sh := (*reflect.StringHeader)(unsafe.Pointer(&s))
+	sh.Data = bh.Data
+	sh.Len = bh.Len
+	return s
 }

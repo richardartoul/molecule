@@ -6,10 +6,10 @@ import (
 
 	"github.com/richardartoul/molecule"
 	"github.com/richardartoul/molecule/src/codec"
-	"github.com/richardartoul/molecule/src/proto"
+	simple "github.com/richardartoul/molecule/src/proto"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/google/gofuzz"
+	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/require"
 )
 
@@ -101,6 +101,7 @@ func TestMoleculeSimple(t *testing.T) {
 				v, err := value.AsBytesUnsafe()
 				require.NoError(t, err)
 				require.Equal(t, m.Bytes, v)
+				require.Equal(t, len(v), cap(v))
 			case 16:
 				packedArr, err := value.AsBytesUnsafe()
 				require.NoError(t, err)

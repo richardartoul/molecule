@@ -345,7 +345,9 @@ func (cb *Buffer) DecodeRawBytes(alloc bool) (buf []byte, err error) {
 	}
 
 	if !alloc {
-		buf = cb.buf[cb.index:end]
+		// We set a cap on the returned slice equal to the length of the buffer so that it is not possible
+		// to read past the end of this slice
+		buf = cb.buf[cb.index:end:end]
 		cb.index = end
 		return
 	}

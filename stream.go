@@ -435,6 +435,11 @@ func (ps *ProtoStream) Embedded(fieldNumber int, inner func(*ProtoStream) error)
 	return ps.writeAll(ps.childBuffer.Bytes())
 }
 
+// Write writes directly to the underlaying writer.
+func (ps *ProtoStream) Write(p []byte) (int, error) {
+	return ps.outputWriter.Write(p)
+}
+
 // writeScratch flushes the scratch buffer to output.
 func (ps *ProtoStream) writeScratch() error {
 	return ps.writeAll(ps.scratchBuffer)

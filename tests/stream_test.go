@@ -86,6 +86,13 @@ func TestSimpleEncoding(t *testing.T) {
 	require.NoError(t, ps.String(fieldString, "reset"))
 	require.NoError(t, proto.Unmarshal(output2.Bytes(), &res))
 	assert.Equal(t, "reset", res.String_)
+
+	// test Write
+	output3 := bytes.NewBuffer([]byte{})
+	ps.Reset(output3)
+	n, err := ps.Write([]byte{1, 2, 3, 4})
+	require.NoError(t, err)
+	require.Equal(t, 4, n)
 }
 
 // Test that the zero values for each field do not result in any encoded data.

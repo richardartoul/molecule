@@ -435,9 +435,10 @@ func (ps *ProtoStream) Embedded(fieldNumber int, inner func(*ProtoStream) error)
 	return ps.writeAll(ps.childBuffer.Bytes())
 }
 
-// Write writes directly to the underlaying writer.
-func (ps *ProtoStream) Write(p []byte) (int, error) {
-	return ps.outputWriter.Write(p)
+// Write writes raw []byte to the underlying writer. It is the callers
+// responsibility to make sure this wont yield a corrupt protobuf stream.
+func (ps *ProtoStream) Write(raw []byte) (int, error) {
+	return ps.outputWriter.Write(raw)
 }
 
 // writeScratch flushes the scratch buffer to output.

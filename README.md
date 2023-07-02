@@ -1,4 +1,4 @@
-[![GoDoc](https://godoc.org/github.com/richardartoul/molecule?status.png)](https://godoc.org/github.com/richardartoul/molecule)
+[![GoDoc](https://pkg.go.dev/github.com/richardartoul/molecule.svg)](https://pkg.go.dev/github.com/richardartoul/molecule)
 [![C.I](https://github.com/richardartoul/molecule/workflows/Go/badge.svg)](https://github.com/richardartoul/molecule/actions)
 
 # Molecule
@@ -30,7 +30,7 @@ The downside, of course, is that `molecule` is more difficult to use (and easier
 
 ## Examples
 
-The [godocs](https://godoc.org/github.com/richardartoul/molecule) have numerous runnable examples.
+The [godocs](https://pkg.go.dev/github.com/richardartoul/molecule) have numerous runnable examples.
 
 ## Attributions
 

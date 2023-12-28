@@ -12,7 +12,7 @@ import (
 	simple "github.com/richardartoul/molecule/src/proto"
 	testproto "github.com/richardartoul/molecule/src/proto"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/assert"
+	"gotest.tools/v3/assert"
 )
 
 // values copied from the .proto file

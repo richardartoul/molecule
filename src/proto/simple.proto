@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package simple;
 
-option go_package = "simple";
+option go_package = ".";
 
 message Simple {
     double double = 1;

@@ -7,8 +7,8 @@ import (
 	"github.com/richardartoul/molecule/src/codec"
 	simple "github.com/richardartoul/molecule/src/proto"
 
-	"github.com/golang/protobuf/proto"
 	fuzz "github.com/google/gofuzz"
+	"google.golang.org/protobuf/proto"
 )
 
 func BenchmarkMolecule(b *testing.B) {

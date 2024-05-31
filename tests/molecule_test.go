@@ -8,9 +8,9 @@ import (
 	"github.com/richardartoul/molecule/src/codec"
 	simple "github.com/richardartoul/molecule/src/proto"
 
-	"github.com/golang/protobuf/proto"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 )
 
 // TODO: Support and test enums.

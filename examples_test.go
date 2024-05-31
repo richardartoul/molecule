@@ -6,7 +6,7 @@ import (
 	"github.com/richardartoul/molecule/src/codec"
 	simple "github.com/richardartoul/molecule/src/proto"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 // Example demonstrates how the molecule library can be used to parse a protobuf message.

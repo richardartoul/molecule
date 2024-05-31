@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	fuzz "github.com/google/gofuzz"
 	"github.com/richardartoul/molecule"
 	simple "github.com/richardartoul/molecule/src/proto"
 	testproto "github.com/richardartoul/molecule/src/proto"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"gotest.tools/assert"
 )
 

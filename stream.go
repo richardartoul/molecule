@@ -241,7 +241,7 @@ func (ps *ProtoStream) Sint64(fieldNumber int, value int64) error {
 	}
 	ps.scratchBuffer = ps.scratchBuffer[:0]
 	ps.encodeKeyToScratch(fieldNumber, protowire.VarintType)
-	ps.scratchBuffer = protowire.AppendVarint(ps.scratchBuffer, zigzag64(uint64(value)))
+	ps.scratchBuffer = protowire.AppendVarint(ps.scratchBuffer, protowire.EncodeZigZag(value))
 	return ps.writeScratch()
 }
 
@@ -253,7 +253,7 @@ func (ps *ProtoStream) Sint64Packed(fieldNumber int, values []int64) error {
 	}
 	ps.scratchBuffer = ps.scratchBuffer[:0]
 	for _, value := range values {
-		ps.scratchBuffer = protowire.AppendVarint(ps.scratchBuffer, zigzag64(uint64(value)))
+		ps.scratchBuffer = protowire.AppendVarint(ps.scratchBuffer, protowire.EncodeZigZag(value))
 	}
 	return ps.writeScratchAsPacked(fieldNumber)
 }
@@ -501,12 +501,4 @@ func (ps *ProtoStream) writeAllString(value string) error {
 // encodeKeyToScratch encodes a protobuf key into ps.scratch.
 func (ps *ProtoStream) encodeKeyToScratch(fieldNumber int, wireType protowire.Type) {
 	ps.scratchBuffer = protowire.AppendVarint(ps.scratchBuffer, uint64(fieldNumber)<<3+uint64(wireType))
-}
-
-func zigzag32(v uint64) uint64 {
-	return uint64((uint32(v) << 1) ^ uint32((int32(v) >> 31)))
-}
-
-func zigzag64(v uint64) uint64 {
-	return (v << 1) ^ uint64((int64(v) >> 63))
 }

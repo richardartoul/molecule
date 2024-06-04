@@ -9,7 +9,6 @@ import (
 	fuzz "github.com/google/gofuzz"
 	"github.com/richardartoul/molecule"
 	simple "github.com/richardartoul/molecule/src/proto"
-	testproto "github.com/richardartoul/molecule/src/proto"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 	"gotest.tools/assert"
@@ -57,7 +56,7 @@ func TestSimpleEncoding(t *testing.T) {
 	require.NoError(t, ps.Int64Packed(fieldRepeatedInt64Packed, []int64{-1, 2, 3}))
 
 	buf := output.Bytes()
-	var res testproto.Simple
+	var res simple.Simple
 
 	require.NoError(t, proto.Unmarshal(buf, &res))
 
@@ -395,7 +394,7 @@ func TestEmbedding(t *testing.T) {
 	require.NoError(t, ps.Embedded(fieldNestedMessage, makeMsg("hello")))
 
 	buf := output.Bytes()
-	var res testproto.Nested
+	var res simple.Nested
 
 	require.NoError(t, proto.Unmarshal(buf, &res))
 

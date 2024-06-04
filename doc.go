@@ -1,5 +1,3 @@
-package molecule
-
 // Package molecule is a Go library for parsing and encoding protobufs in an
 // efficient and zero-allocation manner, progressively consuming or creating
 // the encoded bytes in a streaming fashion instead of (un)marhsaling full
@@ -43,3 +41,4 @@ package molecule
 // examples for details.
 //
 // Note that most methods will do nothing when given their zero value.
+package molecule

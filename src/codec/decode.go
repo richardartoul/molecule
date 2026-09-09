@@ -19,6 +19,12 @@ var varintTypes = map[FieldType]bool{}
 var fixed32Types = map[FieldType]bool{}
 var fixed64Types = map[FieldType]bool{}
 
+const (
+	// See https://protobuf.dev/programming-guides/proto3/#assigning
+	minValidFieldNumber = 1
+	maxValidFieldNumber = 1<<29 - 1
+)
+
 func init() {
 	varintTypes[FieldType_BOOL] = true
 	varintTypes[FieldType_INT32] = true
@@ -473,10 +479,11 @@ func AsTagAndWireType(v uint64) (tag int32, wireType WireType, err error) {
 	// rest is int32 tag number
 	// low 7 bits is wire type
 	wireType = WireType(v & 7)
-	tag = int32(v >> 3)
-	if tag <= 0 {
+	fieldNumber := v >> 3
+	if fieldNumber < minValidFieldNumber || fieldNumber > maxValidFieldNumber {
 		err = ErrBadWireType // We return a constant error here as this allows the function to be inlined
 	}
+	tag = int32(fieldNumber)
 
 	return
 }

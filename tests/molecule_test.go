@@ -128,6 +128,126 @@ func TestMoleculeSimple(t *testing.T) {
 	}
 }
 
+func TestMoleculeProto2(t *testing.T) {
+	var (
+		seed      = time.Now().UnixNano()
+		fuzzer    = fuzz.NewWithSeed(seed)
+		numFuzzes = 100000
+	)
+	defer func() {
+		// Log the seed to make debugging failures easier.
+		t.Logf("Running test with seed: %d", seed)
+	}()
+	// Limit slice size to prevent tests from taking too long.
+	fuzzer.NumElements(0, 100)
+	fuzzer.NilChance(0)
+
+	for i := 0; i < numFuzzes; i++ {
+		m := &simple.MessageWithGroup{}
+		fuzzer.Fuzz(&m)
+		if m == nil {
+			continue
+		}
+
+		marshaled, err := proto.Marshal(m)
+		require.NoError(t, err)
+
+		group := &simple.MessageWithGroup_Group{
+			Double:   new(float64),
+			Float:    new(float32),
+			Int32:    new(int32),
+			Int64:    new(int64),
+			Uint32:   new(uint32),
+			Uint64:   new(uint64),
+			Sint32:   new(int32),
+			Sint64:   new(int64),
+			Fixed32:  new(uint32),
+			Fixed64:  new(uint64),
+			Sfixed32: new(int32),
+			Sfixed64: new(int64),
+			Bool:     new(bool),
+			String_:  new(string),
+		}
+
+		var (
+			buffer      = codec.NewBuffer(marshaled)
+			groupBuffer = codec.NewBuffer(nil)
+		)
+		decodeGroupField := func(fieldNum int32, value molecule.Value) (bool, error) {
+			var err error
+			switch fieldNum {
+			case 1:
+				*group.Double, err = value.AsDouble()
+			case 2:
+				*group.Float, err = value.AsFloat()
+			case 3:
+				*group.Int32, err = value.AsInt32()
+			case 4:
+				*group.Int64, err = value.AsInt64()
+			case 5:
+				*group.Uint32, err = value.AsUint32()
+			case 6:
+				*group.Uint64, err = value.AsUint64()
+			case 7:
+				*group.Sint32, err = value.AsSint32()
+			case 8:
+				*group.Sint64, err = value.AsSint64()
+			case 9:
+				*group.Fixed32, err = value.AsFixed32()
+			case 10:
+				*group.Fixed64, err = value.AsFixed64()
+			case 11:
+				*group.Sfixed32, err = value.AsSFixed32()
+			case 12:
+				*group.Sfixed64, err = value.AsSFixed64()
+			case 13:
+				*group.Bool, err = value.AsBool()
+			case 14:
+				*group.String_, err = value.AsStringUnsafe()
+			case 15:
+				group.Bytes, err = value.AsBytesUnsafe()
+			case 16:
+				packedArr, err := value.AsBytesUnsafe()
+				require.NoError(t, err)
+
+				var (
+					buffer = codec.NewBuffer(packedArr)
+				)
+				err = molecule.PackedRepeatedEach(buffer, codec.FieldType_INT64, func(value molecule.Value) (bool, error) {
+					v, err := value.AsInt64()
+					require.NoError(t, err)
+					group.RepeatedInt64Packed = append(group.RepeatedInt64Packed, v)
+					return true, nil
+				})
+				require.NoError(t, err)
+				
+			default:
+				t.Errorf("unknown field number: %d", fieldNum)
+
+			}
+
+			return err == nil, err
+		}
+		decodeWholeMessage := func(fieldNum int32, value molecule.Value) (bool, error) {
+			switch fieldNum {
+			case 1:
+				groupBytes, err := value.AsBytesUnsafe()
+				noErr(err)
+
+				groupBuffer.Reset(groupBytes)
+				err = molecule.MessageEach(groupBuffer, decodeGroupField)
+				noErr(err)
+			}
+			return true, nil
+		}
+
+		err = molecule.MessageEach(buffer, decodeWholeMessage)
+		require.NoError(t, err)
+
+		require.True(t, proto.Equal(m.Group, group))
+	}
+}
+
 type FuzzSplitBytes struct {
 	bytes    []byte
 	selected int

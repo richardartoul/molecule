@@ -15,6 +15,8 @@ var ErrOverflow = errors.New("proto: integer overflow")
 // is not valid.
 var ErrBadWireType = errors.New("proto: bad wiretype")
 
+var ErrUnexpectedEndGroup = errors.New("proto: unexpected end group wire type")
+
 var varintTypes = map[FieldType]bool{}
 var fixed32Types = map[FieldType]bool{}
 var fixed64Types = map[FieldType]bool{}

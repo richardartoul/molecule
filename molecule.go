@@ -36,8 +36,10 @@ func MessageEach(buffer *codec.Buffer, fn MessageEachFn) error {
 			value.Number, err = buffer.DecodeFixed64()
 		case codec.WireBytes:
 			value.Bytes, err = buffer.DecodeRawBytes(false)
-		case codec.WireStartGroup, codec.WireEndGroup:
-			err = fmt.Errorf("MessageEach: encountered group wire type: %d. Groups not supported", wireType)
+		case codec.WireStartGroup:
+			value.Bytes, err = buffer.ReadGroup(false)
+		case codec.WireEndGroup:
+			err = codec.ErrUnexpectedEndGroup
 		default:
 			err = fmt.Errorf("MessageEach: unknown wireType: %d", wireType)
 		}
@@ -80,8 +82,10 @@ func Next(buffer *codec.Buffer, value *Value) (fieldNum int32, err error) {
 		value.Number, err = buffer.DecodeFixed64()
 	case codec.WireBytes:
 		value.Bytes, err = buffer.DecodeRawBytes(false)
-	case codec.WireStartGroup, codec.WireEndGroup:
-		err = fmt.Errorf("MessageEach: encountered group wire type: %d. Groups not supported", wireType)
+	case codec.WireStartGroup:
+		value.Bytes, err = buffer.ReadGroup(false)
+	case codec.WireEndGroup:
+		err = codec.ErrUnexpectedEndGroup
 	default:
 		err = fmt.Errorf("MessageEach: unknown wireType: %d", wireType)
 	}

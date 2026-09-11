@@ -314,7 +314,7 @@ func BenchmarkMoleculeProto2(b *testing.B) {
 		}
 		for i := 0; i < b.N; i++ {
 			msgBuffer.Reset(marshaled)
-			decodeGroupField := func(fieldNum int32, value molecule.Value) (bool, error) {
+			decodeGroupField := func(fieldNum int32, value molecule.Value) error {
 				var err error
 				switch fieldNum {
 				case 1:
@@ -351,21 +351,27 @@ func BenchmarkMoleculeProto2(b *testing.B) {
 
 				}
 
-				return err == nil, err
+				return err
 			}
 
-			value := molecule.Value{}
+			var (
+				outerValue = molecule.Value{}
+				groupValue = molecule.Value{}
+			)
 			for !msgBuffer.EOF() {
-				fieldNum, err := molecule.Next(msgBuffer, &value)
+				fieldNum, err := molecule.Next(msgBuffer, &outerValue)
 				noErr(err)
 				switch fieldNum {
 				case 1:
-					groupBytes, err := value.AsBytesUnsafe()
+					groupBytes, err := outerValue.AsBytesUnsafe()
 					noErr(err)
 
 					groupBuffer.Reset(groupBytes)
-					err = molecule.MessageEach(groupBuffer, decodeGroupField)
-					noErr(err)
+					for !groupBuffer.EOF() {
+						groupFieldNum, err := molecule.Next(groupBuffer, &groupValue)
+						noErr(err)
+						noErr(decodeGroupField(groupFieldNum, groupValue))
+					}
 				}
 			}
 		}

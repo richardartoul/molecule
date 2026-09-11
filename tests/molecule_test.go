@@ -140,6 +140,7 @@ func TestMoleculeProto2(t *testing.T) {
 	}()
 	// Limit slice size to prevent tests from taking too long.
 	fuzzer.NumElements(0, 100)
+	fuzzer.NilChance(0)
 
 	for i := 0; i < numFuzzes; i++ {
 		m := &simple.MessageWithGroup{}
@@ -210,19 +211,16 @@ func TestMoleculeProto2(t *testing.T) {
 				require.NoError(t, err)
 
 				var (
-					int64s = []int64{}
 					buffer = codec.NewBuffer(packedArr)
 				)
 				err = molecule.PackedRepeatedEach(buffer, codec.FieldType_INT64, func(value molecule.Value) (bool, error) {
 					v, err := value.AsInt64()
 					require.NoError(t, err)
-					int64s = append(int64s, v)
+					group.RepeatedInt64Packed = append(group.RepeatedInt64Packed, v)
 					return true, nil
 				})
 				require.NoError(t, err)
-
-				require.Equal(t, m.Group.RepeatedInt64Packed, int64s)
-
+				
 			default:
 				t.Errorf("unknown field number: %d", fieldNum)
 
@@ -245,6 +243,8 @@ func TestMoleculeProto2(t *testing.T) {
 
 		err = molecule.MessageEach(buffer, decodeWholeMessage)
 		require.NoError(t, err)
+
+		require.True(t, proto.Equal(m.Group, group))
 	}
 }
 

@@ -192,3 +192,103 @@ func noErr(err error) {
 		panic(err)
 	}
 }
+
+func BenchmarkMoleculeProto2(b *testing.B) {
+	var (
+		seed   = int64(1623963202)
+		fuzzer = fuzz.NewWithSeed(seed)
+	)
+	// Limit slice size to prevent tests from taking too long.
+	fuzzer.NumElements(0, 100)
+	fuzzer.NilChance(0)
+
+	m := &simple.MessageWithGroup{}
+	fuzzer.Fuzz(&m)
+	marshaled, err := proto.Marshal(m)
+	noErr(err)
+
+	b.Run("standard unmarshal for proto2", func(b *testing.B) {
+		into := &simple.MessageWithGroup{}
+		for i := 0; i < b.N; i++ {
+			err := proto.Unmarshal(marshaled, into)
+			noErr(err)
+		}
+	})
+
+	b.Run("unmarshal all for proto2", func(b *testing.B) {
+		msgBuffer := codec.NewBuffer(marshaled)
+		groupBuffer := codec.NewBuffer(nil)
+		group := &simple.MessageWithGroup_Group{
+			Double:   new(float64),
+			Float:    new(float32),
+			Int32:    new(int32),
+			Int64:    new(int64),
+			Uint32:   new(uint32),
+			Uint64:   new(uint64),
+			Sint32:   new(int32),
+			Sint64:   new(int64),
+			Fixed32:  new(uint32),
+			Fixed64:  new(uint64),
+			Sfixed32: new(int32),
+			Sfixed64: new(int64),
+			Bool:     new(bool),
+			String_:  new(string),
+		}
+		for i := 0; i < b.N; i++ {
+			msgBuffer.Reset(marshaled)
+			decodeGroupField := func(fieldNum int32, value molecule.Value) (bool, error) {
+				var err error
+				switch fieldNum {
+				case 1:
+					*group.Double, err = value.AsDouble()
+				case 2:
+					*group.Float, err = value.AsFloat()
+				case 3:
+					*group.Int32, err = value.AsInt32()
+				case 4:
+					*group.Int64, err = value.AsInt64()
+				case 5:
+					*group.Uint32, err = value.AsUint32()
+				case 6:
+					*group.Uint64, err = value.AsUint64()
+				case 7:
+					*group.Sint32, err = value.AsSint32()
+				case 8:
+					*group.Sint64, err = value.AsSint64()
+				case 9:
+					*group.Fixed32, err = value.AsFixed32()
+				case 10:
+					*group.Fixed64, err = value.AsFixed64()
+				case 11:
+					*group.Sfixed32, err = value.AsSFixed32()
+				case 12:
+					*group.Sfixed64, err = value.AsSFixed64()
+				case 13:
+					*group.Bool, err = value.AsBool()
+				case 14:
+					*group.String_, err = value.AsStringUnsafe()
+				case 15:
+					group.Bytes, err = value.AsBytesUnsafe()
+				case 16:
+
+				}
+
+				return err == nil, err
+			}
+			decodeWholeMessage := func(fieldNum int32, value molecule.Value) (bool, error) {
+				switch fieldNum {
+				case 1:
+					groupBytes, err := value.AsBytesUnsafe()
+					noErr(err)
+
+					groupBuffer.Reset(groupBytes)
+					err = molecule.MessageEach(groupBuffer, decodeGroupField)
+				}
+				return true, nil
+			}
+
+			err := molecule.MessageEach(msgBuffer, decodeWholeMessage)
+			noErr(err)
+		}
+	})
+}

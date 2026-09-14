@@ -37,7 +37,7 @@ func MessageEach(buffer *codec.Buffer, fn MessageEachFn) error {
 		case codec.WireBytes:
 			value.Bytes, err = buffer.DecodeRawBytes(false)
 		case codec.WireStartGroup:
-			value.Bytes, err = buffer.ReadGroup(false)
+			value.Bytes, err = buffer.ReadGroupForField(fieldNum, false)
 		case codec.WireEndGroup:
 			err = codec.ErrUnexpectedEndGroup
 		default:
@@ -83,7 +83,7 @@ func Next(buffer *codec.Buffer, value *Value) (fieldNum int32, err error) {
 	case codec.WireBytes:
 		value.Bytes, err = buffer.DecodeRawBytes(false)
 	case codec.WireStartGroup:
-		value.Bytes, err = buffer.ReadGroup(false)
+		value.Bytes, err = buffer.ReadGroupForField(fieldNum, false)
 	case codec.WireEndGroup:
 		err = codec.ErrUnexpectedEndGroup
 	default:

@@ -1,6 +1,7 @@
 package moleculetest
 
 import (
+	"google.golang.org/protobuf/encoding/protowire"
 	"testing"
 	"time"
 
@@ -313,4 +314,59 @@ func TestMoleculeTruncated(t *testing.T) {
 		return true, nil
 	})
 	require.Error(t, err, "unexpected EOF")
+}
+
+func TestMoleculeGroups(t *testing.T) {
+	encodeGroup := func(startFieldNum, endFieldNum protowire.Number, payload []byte) []byte {
+		data := protowire.AppendTag(nil, startFieldNum, protowire.StartGroupType)
+		data = append(data, payload...)
+		data = protowire.AppendTag(data, endFieldNum, protowire.EndGroupType)
+		return data
+	}
+	encodeVarintField := func(fieldNum protowire.Number, value int) []byte {
+		data := protowire.AppendTag(nil, fieldNum, protowire.VarintType)
+		data = protowire.AppendVarint(data, uint64(value))
+		return data
+	}
+
+	tests := []struct {
+		name        string
+		data        []byte
+		expectError bool
+	}{
+		{
+			name: "valid group",
+			data: encodeGroup(1, 1, encodeVarintField(1, 123)),
+		},
+		{
+			name: "valid nested group",
+			data: encodeGroup(1, 1, encodeGroup(3, 3, encodeVarintField(1, 123))),
+		},
+		{
+			name:        "invalid group",
+			data:        encodeGroup(1, 2, encodeVarintField(1, 123)),
+			expectError: true,
+		},
+		{
+			name:        "invalid nested group",
+			data:        encodeGroup(1, 1, encodeGroup(3, 4, encodeVarintField(1, 123))),
+			expectError: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := molecule.MessageEach(
+				codec.NewBuffer(test.data),
+				func(fieldNum int32, value molecule.Value) (bool, error) {
+					return true, nil
+				})
+			if test.expectError {
+				require.Error(t, err)
+				require.ErrorContains(t, err, "mismatched end group")
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

@@ -16,6 +16,7 @@ var ErrOverflow = errors.New("proto: integer overflow")
 var ErrBadWireType = errors.New("proto: bad wiretype")
 
 var ErrUnexpectedEndGroup = errors.New("proto: unexpected end group wire type")
+var ErrMismatchedEndGroup = errors.New("proto: mismatched end group")
 
 var varintTypes = map[FieldType]bool{}
 var fixed32Types = map[FieldType]bool{}
@@ -366,7 +367,7 @@ func (cb *Buffer) DecodeRawBytes(alloc bool) (buf []byte, err error) {
 	return
 }
 
-// ReadGroup reads the input until a "group end" tag is found
+// ReadGroupForField reads the input until a "group end" tag is found
 // and returns the data up to that point. Subsequent reads from
 // the buffer will read data after the group end tag. If alloc
 // is true, the data is copied to a new slice before being returned.
@@ -376,9 +377,13 @@ func (cb *Buffer) DecodeRawBytes(alloc bool) (buf []byte, err error) {
 // This function correctly handles nested groups: if a "group start"
 // tag is found, then that group's end tag will be included in the
 // returned data.
-func (cb *Buffer) ReadGroup(alloc bool) ([]byte, error) {
+//
+// This reads the group for a given field number. If the end group tag
+// found does not have the same field number, it returns a mismatched
+// end group error.
+func (cb *Buffer) ReadGroupForField(fieldNum int32, alloc bool) ([]byte, error) {
 	var groupEnd, dataEnd int
-	groupEnd, dataEnd, err := cb.findGroupEnd()
+	groupEnd, dataEnd, err := cb.findGroupEnd(fieldNum)
 	if err != nil {
 		return nil, err
 	}
@@ -393,11 +398,13 @@ func (cb *Buffer) ReadGroup(alloc bool) ([]byte, error) {
 	return results, nil
 }
 
-// SkipGroup is like ReadGroup, except that it discards the
+// SkipGroupForField is like ReadGroupForField, except that it discards the
 // data and just advances the buffer to point to the input
 // right *after* the "group end" tag.
-func (cb *Buffer) SkipGroup() error {
-	groupEnd, _, err := cb.findGroupEnd()
+// Same as for ReadGroupForField, if the field number in the end group
+// tag isn't the expected one, it returns a mismatched end group error.
+func (cb *Buffer) SkipGroupForField(fieldNum int32) error {
+	groupEnd, _, err := cb.findGroupEnd(fieldNum)
 	if err != nil {
 		return err
 	}
@@ -405,7 +412,7 @@ func (cb *Buffer) SkipGroup() error {
 	return nil
 }
 
-func (cb *Buffer) findGroupEnd() (groupEnd int, dataEnd int, err error) {
+func (cb *Buffer) findGroupEnd(expectedFieldNumber int32) (groupEnd int, dataEnd int, err error) {
 	bs := cb.buf
 	start := cb.index
 	defer func() {
@@ -419,7 +426,7 @@ func (cb *Buffer) findGroupEnd() (groupEnd int, dataEnd int, err error) {
 		if err != nil {
 			return 0, 0, err
 		}
-		_, wireType, err := AsTagAndWireType(v)
+		fieldNum, wireType, err := AsTagAndWireType(v)
 		if err != nil {
 			return 0, 0, err
 		}
@@ -462,10 +469,13 @@ func (cb *Buffer) findGroupEnd() (groupEnd int, dataEnd int, err error) {
 				return 0, 0, err
 			}
 		case WireStartGroup:
-			if err := cb.SkipGroup(); err != nil {
+			if err := cb.SkipGroupForField(fieldNum); err != nil {
 				return 0, 0, err
 			}
 		case WireEndGroup:
+			if fieldNum != expectedFieldNumber {
+				return 0, 0, ErrMismatchedEndGroup
+			}
 			return cb.index, fieldStart, nil
 		default:
 			return 0, 0, ErrBadWireType

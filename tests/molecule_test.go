@@ -221,7 +221,7 @@ func TestMoleculeProto2(t *testing.T) {
 					return true, nil
 				})
 				require.NoError(t, err)
-				
+
 			default:
 				t.Errorf("unknown field number: %d", fieldNum)
 
@@ -350,6 +350,25 @@ func TestMoleculeGroups(t *testing.T) {
 		{
 			name:        "invalid nested group",
 			data:        encodeGroup(1, 1, encodeGroup(3, 4, encodeVarintField(1, 123))),
+			expectError: true,
+		},
+		{
+			name: "valid group containing scalar and nested group",
+			data: encodeGroup(1, 1,
+				append(
+					encodeVarintField(1, 2),
+					encodeGroup(2, 2, encodeVarintField(1, 123))...,
+				),
+			),
+		},
+		{
+			name: "invalid group containing scalar and nested group",
+			data: encodeGroup(1, 1,
+				append(
+					encodeVarintField(1, 2),
+					encodeGroup(2, 5, encodeVarintField(1, 123))...,
+				),
+			),
 			expectError: true,
 		},
 	}
